@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Assisted Engineering – Learning Path</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700&display=swap');
+
+:root {
+  --bg: #0b0e17;
+  --panel: #111420;
+  --card: #161b2e;
+  --border: #1e2540;
+  --accent: #4f8ef7;
+  --accent2: #7c3aed;
+  --green: #22d3a5;
+  --yellow: #f59e0b;
+  --red: #ef4444;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --sidebar-w: 280px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  height: 48px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.topbar-logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+.topbar-tag {
+  font-size: 10px;
+  background: rgba(79,142,247,0.12);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(79,142,247,0.3);
+  font-family: 'JetBrains Mono', monospace;
+}
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.progress-global {
+  font-size: 11px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.progress-bar-mini {
+  width: 120px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--green));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.sidebar-section-title {
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 16px 16px 8px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+  position: relative;
+}
+.nav-item:hover { background: rgba(79,142,247,0.06); }
+.nav-item.active {
+  background: rgba(79,142,247,0.1);
+  border-left-color: var(--accent);
+}
+.nav-item.completed .nav-icon { background: rgba(34,211,165,0.15); color: var(--green); }
+.nav-item.locked { opacity: 0.4; cursor: not-allowed; }
+.nav-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(79,142,247,0.12);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+}
+.nav-label { flex: 1; }
+.nav-label-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.nav-label-sub {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.nav-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+.nav-item.completed .nav-check {
+  background: var(--green);
+  border-color: var(--green);
+  color: #000;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+.xp-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.xp-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  gap: 0;
+  flex-shrink: 0;
+}
+.tab {
+  padding: 12px 20px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── CONTENT AREA ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+
+/* ── MODULE HEADER ── */
+.module-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.4s ease;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(12px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.module-num {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.module-meta {}
+.module-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.module-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* ── VIDEO BLOCK ── */
+.video-block {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.video-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.video-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.video-title-bar {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+}
+.video-player {
+  position: relative;
+  padding-bottom: 56.25%;
+  background: #000;
+}
+.video-player iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border: none;
+}
+
+/* ── CONCEPTS ── */
+.concepts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.concept-chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.concept-chip span { font-size: 14px; }
+
+/* ── QUIZ SECTION ── */
+.quiz-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  animation: fadeUp 0.3s ease;
+}
+.quiz-header {
+  background: linear-gradient(90deg, rgba(79,142,247,0.15), rgba(124,58,237,0.1));
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.quiz-header-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: rgba(79,142,247,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.quiz-header-text {}
+.quiz-header-title { font-size: 14px; font-weight: 700; }
+.quiz-header-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.quiz-progress-text {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.quiz-body { padding: 24px; }
+.question-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+.question-text {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option {
+  padding: 13px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.option:hover { border-color: var(--accent); background: rgba(79,142,247,0.06); }
+.option.selected { border-color: var(--accent); background: rgba(79,142,247,0.12); }
+.option.correct { border-color: var(--green); background: rgba(34,211,165,0.1); color: var(--green); }
+.option.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); color: var(--red); }
+.option-letter {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.option.selected .option-letter { background: var(--accent); color: #fff; }
+.option.correct .option-letter { background: var(--green); color: #000; }
+.option.wrong .option-letter { background: var(--red); color: #fff; }
+
+.quiz-feedback {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  display: none;
+}
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct-fb { background: rgba(34,211,165,0.1); border: 1px solid rgba(34,211,165,0.3); color: var(--green); }
+.quiz-feedback.wrong-fb { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+
+.quiz-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.q-progress-dots { display: flex; gap: 6px; }
+.q-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s;
+}
+.q-dot.done { background: var(--green); }
+.q-dot.current { background: var(--accent); transform: scale(1.3); }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Sora', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #3b7de8; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-success {
+  background: var(--green);
+  color: #000;
+  font-weight: 700;
+}
+.btn-success:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* ── SCORE CARD ── */
+.score-card {
+  text-align: center;
+  padding: 40px 24px;
+  animation: fadeUp 0.4s ease;
+}
+.score-circle {
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  position: relative;
+}
+.score-circle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.score-num { font-size: 36px; font-weight: 700; color: var(--text); }
+.score-total { font-size: 13px; color: var(--muted); }
+.score-label { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.score-message { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+.badges { display: flex; justify-content: center; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+.badge {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+}
+.badge-gold { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.4); color: var(--yellow); }
+.badge-blue { background: rgba(79,142,247,0.1); border-color: rgba(79,142,247,0.4); color: var(--accent); }
+.badge-green { background: rgba(34,211,165,0.1); border-color: rgba(34,211,165,0.4); color: var(--green); }
+
+/* ── COMPLETION SCREEN ── */
+.completion-screen {
+  text-align: center;
+  padding: 60px 24px;
+  animation: fadeUp 0.5s ease;
+  display: none;
+}
+.completion-screen.show { display: block; }
+.completion-icon { font-size: 64px; margin-bottom: 20px; }
+.completion-title { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+.completion-sub { font-size: 14px; color: var(--muted); max-width: 480px; margin: 0 auto 32px; line-height: 1.6; }
+.final-stats {
+  display: flex; justify-content: center; gap: 40px; margin-bottom: 32px;
+}
+.final-stat { text-align: center; }
+.final-stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.final-stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── NOTIFICATION ── */
+.notif {
+  position: fixed;
+  top: 60px; right: 20px;
+  background: var(--card);
+  border: 1px solid var(--green);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 13px;
+  color: var(--green);
+  display: flex; align-items: center; gap: 10px;
+  transform: translateX(200%);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 100;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.notif.show { transform: translateX(0); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">AI_LEARNING.path</div>
+  <div class="topbar-tag">Minsait / Indra</div>
+  <div class="topbar-right">
+    <div class="progress-global" id="progressLabel">0 / 4 módulos</div>
+    <div class="progress-bar-mini">
+      <div class="progress-bar-mini-fill" id="globalBar" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif">✓ <span id="notifText"></span></div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section-title">Módulos</div>
+
+    <div class="nav-item active" id="nav-0" onclick="loadModule(0)">
+      <div class="nav-icon">01</div>
+      <div class="nav-label">
+        <div class="nav-label-title">Engineering Harness</div>
+        <div class="nav-label-sub">Fundamentos</div>
+      </div>
+      <div class="nav-check" id="check-0">✓</div>
+    </div>
+
+    <div class="nav-item locked" id="nav-1" onclick="loadModule(1)">
+      <div class="nav-icon">02</div>
+      <div class="nav-label">
+        <div class="nav-label-title">Buenas Prácticas</div>
+        <div class="nav-label-sub">Meta Staff Engineer</div>
+      </div>
+      <div class="nav-check" id="check-1">✓</div>
+    </div>
+
+    <div class="nav-item locked" id="nav-2" onclick="loadModule(2)">
+      <div class="nav-icon">03</div>
+      <div class="nav-label">
+        <div class="nav-label-title">Subagents & Context</div>
+        <div class="nav-label-sub">Parallel Execution</div>
+      </div>
+      <div class="nav-check" id="check-2">✓</div>
+    </div>
+
+    <div class="nav-item locked" id="nav-3" onclick="loadModule(3)">
+      <div class="nav-icon">04</div>
+      <div class="nav-label">
+        <div class="nav-label-title">Proyecto End-to-End</div>
+        <div class="nav-label-sub">Build from scratch</div>
+      </div>
+      <div class="nav-check" id="check-3">✓</div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="xp-bar-label">
+        <span>XP acumulado</span>
+        <span id="xpLabel">0 / 800 XP</span>
+      </div>
+      <div class="xp-bar">
+        <div class="xp-fill" id="xpFill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('video',this)">▶ Video</div>
+      <div class="tab" onclick="switchTab('quiz',this)">⚡ Quiz</div>
+      <div class="tab" onclick="switchTab('notes',this)">📋 Conceptos</div>
+    </div>
+    <div class="content" id="mainContent"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────
+const modules = [
+  {
+    num: "01",
+    title: "Entender el Engineering Harness",
+    desc: "Comprende qué es un AI Engineering Harness y cómo funciona Claude Code internamente.",
+    videoId: "I82j7AzMU80",
+    videoUrl: "https://www.youtube.com/watch?v=I82j7AzMU80",
+    videoTitle: "How does Claude Code actually work? — Theo.gg",
+    concepts: [
+      { icon: "🧠", text: "Engineering Harness" },
+      { icon: "🤖", text: "Agent Harness" },
+      { icon: "📐", text: "AI Model" },
+      { icon: "🪟", text: "Context Window" },
+      { icon: "🔧", text: "Tool Use" },
+      { icon: "💬", text: "Prompting" },
+      { icon: "🏗️", text: "Context Engineering" },
+    ],
+    quiz: [
+      {
+        q: "¿Qué es un Engineering Harness en el contexto de IA?",
+        opts: ["Un framework para hacer deployment de modelos en producción","Una capa de software que conecta el AI model con herramientas, contexto y flujo de trabajo del desarrollador","Un servidor para ejecutar modelos de lenguaje localmente","Un sistema de logging para auditar las respuestas de la IA"],
+        correct: 1,
+        explain: "Un Engineering Harness es la capa que orquesta el AI model con herramientas reales (filesystem, terminal, APIs) y el contexto del proyecto, permitiendo al desarrollador trabajar con IA de forma integrada."
+      },
+      {
+        q: "¿Qué determina la calidad de las respuestas del AI model en un harness?",
+        opts: ["La velocidad de la conexión a internet","La cantidad de RAM disponible en el servidor","La calidad del contexto y el prompting que recibe el modelo","La versión del sistema operativo del desarrollador"],
+        correct: 2,
+        explain: "El modelo es tan bueno como el contexto que recibe. Context engineering y prompting de calidad son los factores clave que determinan la utilidad de las respuestas."
+      },
+      {
+        q: "¿Cuál es la principal limitación de la Context Window?",
+        opts: ["Solo puede procesar texto, no código","Tiene un tamaño máximo de tokens: si se supera, el modelo pierde información previa","No permite hacer preguntas de seguimiento","Solo funciona con proyectos de menos de 100 archivos"],
+        correct: 1,
+        explain: "La context window tiene un límite de tokens. Cuando se llena, el modelo empieza a olvidar información anterior, lo que degrada la calidad de las respuestas. Por eso el manejo del contexto es crítico."
+      },
+      {
+        q: "¿Qué significa 'Tool Use' en un AI Harness como Claude Code?",
+        opts: ["La capacidad del modelo de aprender nuevas habilidades automáticamente","La habilidad del AI de invocar funciones reales: leer archivos, ejecutar comandos, buscar en internet","El proceso de actualizar los pesos del modelo con datos nuevos","La interfaz gráfica para interactuar con el AI"],
+        correct: 1,
+        explain: "Tool Use permite al AI ejecutar acciones reales en el entorno: leer/escribir archivos, correr bash, llamar APIs. Esto es lo que transforma al modelo de un chatbot en un agente de engineering."
+      },
+      {
+        q: "¿Cómo se diferencia Claude Code de un chatbot tradicional de IA?",
+        opts: ["Claude Code solo sirve para Python, los chatbots son multi-lenguaje","Claude Code actúa como agente: puede leer el codebase, ejecutar comandos y modificar archivos de forma autónoma","Los chatbots son más rápidos porque no necesitan tool use","No hay diferencia significativa, ambos generan texto"],
+        correct: 1,
+        explain: "Claude Code es un Engineering Harness que opera como agente: tiene acceso al filesystem, terminal y herramientas del proyecto. Un chatbot solo genera texto sin interactuar con el entorno real."
+      },
+      {
+        q: "¿Qué es el 'prompting' en el contexto de un AI Engineering Harness?",
+        opts: ["El proceso de instalar dependencias del proyecto","La forma en que el desarrollador comunica instrucciones, contexto y objetivos al modelo de IA","Un sistema de notificaciones del harness","La configuración inicial del servidor donde corre el modelo"],
+        correct: 1,
+        explain: "El prompting es la habilidad de estructurar instrucciones claras, con contexto suficiente y objetivos precisos para que el AI genere outputs útiles. Es la habilidad más crítica al trabajar con un harness."
+      },
+      {
+        q: "¿Qué sucede cuando el AI model recibe contexto irrelevante o excesivo?",
+        opts: ["El modelo ignora automáticamente la información irrelevante","El modelo puede confundirse, generar respuestas imprecisas o cometer errores lógicos","El modelo mejora su respuesta al tener más información disponible","No hay impacto: el modelo siempre filtra lo que necesita"],
+        correct: 1,
+        explain: "El ruido en el contexto degrada la calidad del output. Un harness bien configurado debe entregar al modelo solo la información relevante para cada tarea, ni más ni menos."
+      },
+      {
+        q: "¿Cuál es la diferencia entre un AI model y un AI agent?",
+        opts: ["Son términos sinónimos, no hay diferencia técnica","El model genera texto; el agent usa ese modelo + herramientas + contexto para ejecutar tareas complejas de forma autónoma","El agent es más lento que el model porque tiene más pasos","El model trabaja en la nube, el agent solo localmente"],
+        correct: 1,
+        explain: "Un AI model es el motor de lenguaje (LLM). Un AI agent combina ese modelo con tool use, memoria y un loop de razonamiento que le permite planificar y ejecutar tareas de ingeniería de forma autónoma."
+      },
+      {
+        q: "¿Por qué es importante que un developer entienda cómo funciona Claude Code internamente?",
+        opts: ["No es necesario: basta con saber escribir prompts básicos","Para poder diagnosticar fallos, optimizar el uso del contexto y sacarle el máximo provecho al harness","Solo los arquitectos de software necesitan ese nivel de detalle","Para poder reemplazar a Claude Code con otro harness sin curva de aprendizaje"],
+        correct: 1,
+        explain: "Entender el funcionamiento interno permite al developer identificar por qué una sesión se degrada, cómo manejar la context window y cómo estructurar mejor las interacciones para obtener resultados de mayor calidad."
+      },
+      {
+        q: "¿Cuál es el concepto de 'Context Engineering'?",
+        opts: ["El proceso de diseñar la infraestructura donde corre el modelo","La disciplina de construir, filtrar y organizar el contexto que recibe el AI para maximizar la calidad de sus outputs","La configuración de variables de entorno del servidor","Un patrón de arquitectura para sistemas distribuidos con IA"],
+        correct: 1,
+        explain: "Context Engineering es la práctica de decidir qué información incluir, cómo estructurarla y cuándo limpiarla. Es la evolución del prompt engineering: no solo cómo preguntas, sino qué entorno le construyes al modelo."
+      }
+    ]
+  },
+  {
+    num: "02",
+    title: "Buenas Prácticas de Uso",
+    desc: "Aprende cómo un Staff Engineer de Meta usa Claude Code en su flujo de trabajo real.",
+    videoId: "mZzhfPle9QU",
+    videoUrl: "https://youtu.be/mZzhfPle9QU",
+    videoTitle: "How I use Claude Code? Tips by a Meta Staff Engineer",
+    concepts: [
+      { icon: "📦", text: "Context Delivery" },
+      { icon: "✂️", text: "Problem Splitting" },
+      { icon: "🔍", text: "Codebase Exploration" },
+      { icon: "👀", text: "Code Review" },
+      { icon: "🎯", text: "Technical Ownership" },
+      { icon: "🔄", text: "Iteration Loop" },
+      { icon: "📝", text: "Prompt Clarity" },
+    ],
+    quiz: [
+      {
+        q: "¿Cuál es la práctica más importante al iniciar una sesión con Claude Code?",
+        opts: ["Pedir que genere todo el código del proyecto de una sola vez","Entregar contexto claro: objetivo, restricciones, stack tecnológico y estado actual","Dejar que el AI decida por sí solo qué hacer sin instrucciones","Usar solo comandos de una palabra para ahorrar tokens"],
+        correct: 1,
+        explain: "El contexto inicial es crítico. Cuanto más preciso seas sobre el objetivo, el stack, las restricciones y el estado actual, más útiles y precisas serán las respuestas del harness."
+      },
+      {
+        q: "¿Cómo recomienda un Staff Engineer dividir problemas complejos con AI?",
+        opts: ["Poner todo el problema en un solo prompt extenso","Dividir en subtareas pequeñas y manejables, resolviendo una a la vez","Pedir al AI que decida cómo dividir el trabajo sin intervención del developer","Evitar dividir: el AI moderno maneja problemas de cualquier tamaño sin degradación"],
+        correct: 1,
+        explain: "Los problemas complejos deben dividirse en tareas atómicas. Cada prompt debe tener un objetivo claro y alcanzable. Esto reduce errores y mantiene la context window limpia."
+      },
+      {
+        q: "¿Por qué es esencial hacer review del código generado por el AI?",
+        opts: ["Solo por protocolo corporativo, el AI no comete errores técnicos","Porque el AI puede generar código que compila pero no cumple los requisitos de negocio o introduce vulnerabilidades","El review es opcional si el AI tiene rating alto en benchmarks","Solo si el proyecto tiene más de 10,000 líneas de código"],
+        correct: 1,
+        explain: "El AI puede generar código funcional que no cumple requisitos de negocio, introduce deuda técnica o tiene problemas de seguridad. El developer siempre debe mantener ownership y criterio técnico."
+      },
+      {
+        q: "¿Qué significa mantener 'Technical Ownership' cuando se trabaja con AI?",
+        opts: ["No usar AI y escribir todo el código manualmente","Aprobar todo el código del AI sin modificaciones para ser más eficiente","Entender, validar y ser responsable de cada cambio generado por la IA en el codebase","Usar AI solo para documentación, nunca para lógica de negocio"],
+        correct: 2,
+        explain: "Technical Ownership significa que el developer es responsable de todo lo que entra al codebase, sin importar si lo escribió la IA o él mismo. Comprender el código generado es no negociable."
+      },
+      {
+        q: "¿Cómo se debe usar el AI para explorar un codebase desconocido?",
+        opts: ["Pedirle que reescriba todo el código para entenderlo mejor","Preguntarle sobre la arquitectura, relaciones entre módulos y puntos de entrada antes de hacer cambios","Ignorarlo para esta tarea: el AI no es bueno analizando código existente","Usar el AI solo cuando ya conoces el codebase completamente"],
+        correct: 1,
+        explain: "El AI es un excelente aliado para el discovery: puede leer el codebase, identificar patrones, explicar arquitectura y señalar áreas críticas. Esto acelera el onboarding y el análisis de deuda técnica."
+      },
+      {
+        q: "¿Qué pasa cuando le das al AI un objetivo demasiado vago como 'mejora el rendimiento'?",
+        opts: ["El AI infiere automáticamente qué optimizar y produce el resultado correcto","El AI puede generar cambios aleatorios que no resuelven el problema real o empeoran otras áreas","El AI rechaza el prompt y pide más información antes de proceder","El AI siempre pide confirmación antes de modificar código en estos casos"],
+        correct: 1,
+        explain: "Un objetivo vago produce outputs vagos. El developer debe especificar: ¿qué componente? ¿qué métrica de rendimiento? ¿cuál es el baseline actual? Cuanto más específico el objetivo, más útil el resultado."
+      },
+      {
+        q: "¿Cuál es la señal de que una sesión de Claude Code se está degradando?",
+        opts: ["El AI tarda más en responder","Las respuestas empiezan a ignorar restricciones previas, repetir código ya generado o perder coherencia con decisiones anteriores","El AI comienza a usar un lenguaje de programación diferente","Las respuestas se vuelven más cortas automáticamente"],
+        correct: 1,
+        explain: "Cuando la context window se satura, el modelo pierde coherencia con el estado anterior de la sesión. La señal clara es que empieza a contradecirse, ignorar restricciones definidas o repetir trabajo ya hecho."
+      },
+      {
+        q: "¿Cómo se usa el AI correctamente para refactoring de código legado?",
+        opts: ["Pedirle que refactorice todo el módulo de una vez para ahorrar tiempo","Explicar primero la intención del código original, las restricciones del negocio y luego pedir cambios incrementales","Dejar que el AI reescriba el código sin contexto del negocio para evitar sesgos","No usar AI para refactoring: es demasiado arriesgado en código productivo"],
+        correct: 1,
+        explain: "El refactoring con AI requiere contexto del negocio. Sin entender la intención original del código, el AI puede 'mejorar' técnicamente pero romper lógica de negocio crítica que no está documentada."
+      },
+      {
+        q: "¿Qué es el 'iteration loop' en el flujo de trabajo con AI?",
+        opts: ["Un bucle infinito que el AI ejecuta para optimizar código","El ciclo de generar → revisar → corregir contexto → regenerar que el developer repite hasta obtener el resultado correcto","Un patrón de diseño para pipelines de datos con IA","La cantidad de veces que el AI puede responder en una sesión"],
+        correct: 1,
+        explain: "El iteration loop es el corazón del trabajo con AI: generas un output, lo evalúas con criterio técnico, ajustas el contexto o el prompt según lo que falló y vuelves a iterar. Es un proceso deliberado, no aleatorio."
+      },
+      {
+        q: "¿Cuándo es el momento correcto para iniciar una sesión nueva en lugar de continuar la actual?",
+        opts: ["Después de cada respuesta del AI para mantener el contexto limpio","Cuando la sesión ha acumulado demasiado contexto irrelevante y las respuestas pierden precisión","Solo al inicio de cada sprint de desarrollo","Nunca: siempre es mejor continuar la misma sesión para aprovechar el historial"],
+        correct: 1,
+        explain: "Una sesión nueva es necesaria cuando el contexto acumulado genera más ruido que señal. Saber cuándo 'limpiar' y empezar fresco —con solo el contexto relevante— es una habilidad clave de un AI-assisted developer."
+      }
+    ]
+  },
+  {
+    num: "03",
+    title: "Subagents y Context Isolation",
+    desc: "Domina la ejecución paralela de tareas y el aislamiento de contexto para máxima precisión.",
+    videoId: "GMAoTeD9siU",
+    videoUrl: "https://www.youtube.com/watch?v=GMAoTeD9siU",
+    videoTitle: "Subagents: Parallel Execution and Context Isolation",
+    concepts: [
+      { icon: "🔀", text: "Subagents" },
+      { icon: "⚡", text: "Parallel Execution" },
+      { icon: "🔒", text: "Context Isolation" },
+      { icon: "📡", text: "Result Coordination" },
+      { icon: "🎯", text: "Noise Reduction" },
+      { icon: "🧩", text: "Task Decomposition" },
+      { icon: "🔗", text: "Agent Orchestration" },
+    ],
+    quiz: [
+      {
+        q: "¿Qué es un Subagent en el contexto de AI Engineering?",
+        opts: ["Un AI de menor capacidad para tareas simples","Una instancia del AI especializada en una subtarea específica, ejecutada con contexto propio y aislado","Una copia de seguridad del agente principal","Un módulo de testing automatizado"],
+        correct: 1,
+        explain: "Un subagent es una instancia del modelo ejecutada con un contexto específico y aislado para resolver una subtarea concreta, coordinada por un agente orquestador."
+      },
+      {
+        q: "¿Cuál es el principal beneficio del Context Isolation?",
+        opts: ["Permite al AI trabajar sin conexión a internet","Evita que el ruido de otras tareas contamine el contexto de cada subagent, mejorando precisión","Reduce el costo de uso de la API del AI","Aumenta la velocidad de escritura del código generado"],
+        correct: 1,
+        explain: "Context Isolation asegura que cada subagent trabaja con solo la información relevante para su tarea. Esto elimina el ruido de contexto, que es una de las principales causas de errores en sesiones largas."
+      },
+      {
+        q: "¿En qué escenario conviene usar Parallel Execution con subagents?",
+        opts: ["Cuando hay una sola tarea simple que resolver","Cuando múltiples tareas son independientes entre sí y pueden ejecutarse simultáneamente sin bloquearse","Solo en proyectos con más de 5 desarrolladores en el equipo","Cuando el modelo no tiene suficiente contexto para hacer una tarea compleja"],
+        correct: 1,
+        explain: "La ejecución paralela aplica cuando las tareas son independientes: por ejemplo, escribir tests de un módulo mientras se documenta otro. Elimina el cuello de botella de la ejecución secuencial."
+      },
+      {
+        q: "¿Cómo se coordinan los resultados de múltiples subagents?",
+        opts: ["El desarrollador los combina manualmente siempre","Un agente orquestador recoge los outputs de cada subagent y los integra según las dependencias definidas","Los subagents se combinan automáticamente sin necesidad de coordinación","Solo el último subagent en terminar define el resultado final"],
+        correct: 1,
+        explain: "El orquestador (agente principal) es responsable de definir las tareas, lanzar los subagents y combinar sus resultados de forma coherente según las dependencias del proyecto."
+      },
+      {
+        q: "¿Cuándo se degrada la calidad de un AI agent en una sesión larga?",
+        opts: ["Nunca: los modelos modernos mantienen calidad constante indefinidamente","Cuando la context window se llena de información irrelevante o contradictoria (ruido de contexto)","Solo cuando el desarrollador hace más de 50 preguntas seguidas","Cuando la sesión supera las 8 horas continuas"],
+        correct: 1,
+        explain: "A medida que la context window se llena de información mezclada de diferentes tareas, el modelo empieza a perder precisión. Los subagents con contexto aislado resuelven exactamente este problema."
+      },
+      {
+        q: "¿Cuál es la diferencia entre Task Decomposition y simplemente dividir trabajo?",
+        opts: ["Son lo mismo: dividir trabajo es task decomposition","Task decomposition implica identificar dependencias entre tareas, definir inputs/outputs de cada una y asignarlas a subagents con contexto apropiado","Task decomposition es solo para proyectos de más de 3 meses","La diferencia está en el tamaño: decomposition aplica a épicas, dividir trabajo a tareas pequeñas"],
+        correct: 1,
+        explain: "Task decomposition para subagents requiere análisis de dependencias: qué tareas pueden correr en paralelo, cuáles necesitan el output de otra, qué contexto mínimo necesita cada subagent para funcionar con precisión."
+      },
+      {
+        q: "¿Qué problema resuelve específicamente el Context Isolation en sesiones largas?",
+        opts: ["La lentitud de respuesta cuando el modelo está ocupado","La contaminación cruzada: que el contexto de la tarea A interfiera con la precisión de la tarea B","La falta de memoria persistente entre sesiones diferentes","El límite de tokens por minuto de la API del modelo"],
+        correct: 1,
+        explain: "Sin isolation, el contexto de una tarea contamina el razonamiento de otras. Por ejemplo, un subagent trabajando en autenticación no debería tener en su contexto todo el código del módulo de reportes."
+      },
+      {
+        q: "¿Qué rol cumple el agente orquestador en una arquitectura multi-subagent?",
+        opts: ["Ejecuta directamente todas las tareas del proyecto","Define las tareas, asigna contexto a cada subagent, lanza su ejecución y sintetiza los resultados en un output coherente","Solo monitorea el progreso sin intervenir en la ejecución","Es un subagent especializado en la tarea más crítica del proyecto"],
+        correct: 1,
+        explain: "El orquestador es el cerebro de la arquitectura: planifica, delega, coordina y sintetiza. No ejecuta directamente, sino que gestiona el flujo entre subagents para que el resultado final sea coherente."
+      },
+      {
+        q: "¿Cómo se extrapolan los conceptos de subagents a GitHub Copilot?",
+        opts: ["No se pueden extrapolar: Copilot es solo autocompletado de código","Abriendo múltiples instancias de Copilot en paralelo en distintos archivos del proyecto","Aplicando el principio de enfoque: usar Copilot para una sola tarea concreta a la vez, con el archivo correcto abierto y sin contexto innecesario visible","Copilot maneja subagents automáticamente sin configuración del developer"],
+        correct: 2,
+        explain: "Aunque Copilot no tiene subagents nativos, el principio de isolation aplica: trabajar en un archivo específico con foco claro, sin contexto irrelevante abierto. El developer simula el isolation manualmente."
+      },
+      {
+        q: "¿Cuál es el principal riesgo de no aplicar context isolation en un proyecto complejo?",
+        opts: ["El proyecto tardará más en compilar","El AI generará código inconsistente: puede contradecir decisiones previas, mezclar patrones o ignorar restricciones definidas en otras partes de la sesión","Solo genera código más verboso de lo necesario","El riesgo es solo de rendimiento, no de calidad del código"],
+        correct: 1,
+        explain: "Sin isolation, en proyectos complejos el AI pierde coherencia entre módulos: puede implementar el mismo patrón de formas distintas, ignorar restricciones definidas 10 mensajes atrás, o introducir inconsistencias arquitecturales."
+      }
+    ]
+  },
+  {
+    num: "04",
+    title: "Proyecto End-to-End con IA",
+    desc: "Observa cómo construir un proyecto completo desde cero con AI assistance, manteniendo ownership.",
+    videoId: "K-mA3MZ_EzU",
+    videoUrl: "https://www.youtube.com/watch?v=K-mA3MZ_EzU",
+    videoTitle: "Watch me build a brand new project from scratch — Matt Pocock",
+    concepts: [
+      { icon: "🚀", text: "Project Kickoff" },
+      { icon: "📋", text: "Task Definition" },
+      { icon: "🔁", text: "Dev Loop con IA" },
+      { icon: "🐛", text: "Error Correction" },
+      { icon: "🏗️", text: "Architecture Decision" },
+      { icon: "🧪", text: "Testing con AI" },
+      { icon: "📖", text: "AI Documentation" },
+    ],
+    quiz: [
+      {
+        q: "¿Cuál es el primer paso al iniciar un proyecto desde cero con AI assistance?",
+        opts: ["Pedirle al AI que escriba todo el código de una vez","Definir claramente el objetivo del proyecto y descomponerlo en tareas concretas antes de involucrar al AI","Dejar que el AI decida la arquitectura sin restricciones del developer","Instalar todas las dependencias antes de hablar con el AI"],
+        correct: 1,
+        explain: "La definición clara del objetivo y la descomposición en tareas concretas es el primer paso. El AI no puede compensar objetivos difusos: garbage in, garbage out."
+      },
+      {
+        q: "¿Cómo se debe manejar un error generado por el AI durante el desarrollo?",
+        opts: ["Reiniciar toda la sesión y empezar desde cero","Entender la causa del error, corregir el contexto o el prompt, e iterar con criterio técnico","Aceptar el error y seguir adelante, el AI lo corregirá solo eventualmente","Reportarlo inmediatamente al proveedor del AI como bug"],
+        correct: 1,
+        explain: "Los errores son parte del loop de desarrollo con IA. El developer debe analizar la causa, ajustar el contexto o el prompt y reiterar. El criterio técnico propio es lo que diferencia buenos de malos resultados."
+      },
+      {
+        q: "¿Qué papel tiene el AI en las Architecture Decisions de un proyecto?",
+        opts: ["El AI decide la arquitectura sin intervención del developer","El AI es un consultor que propone opciones; el developer evalúa y decide con base en el contexto del negocio","El AI no debe participar en decisiones de arquitectura","Solo puede ayudar con arquitecturas de microservicios, no monolíticas"],
+        correct: 1,
+        explain: "El AI puede proponer patrones, comparar opciones y señalar trade-offs, pero el developer toma la decisión final considerando el contexto de negocio, el equipo y las restricciones técnicas reales."
+      },
+      {
+        q: "¿Cómo integra un developer senior el AI en el flujo de testing?",
+        opts: ["No usa AI para testing porque los tests deben ser 100% manuales","Usa el AI para generar casos de test, identificar edge cases y revisar cobertura, validando cada test generado","Deja que el AI ejecute los tests y aprueba sin revisión para ahorrar tiempo","Solo usa AI para testing en producción, nunca en desarrollo"],
+        correct: 1,
+        explain: "El AI acelera la generación de tests y ayuda a identificar edge cases que el developer podría pasar por alto. El developer valida que cada test tenga sentido y cubra los escenarios de negocio correctos."
+      },
+      {
+        q: "¿Qué define a un developer que usa AI con 'criterio técnico' vs uno que no lo tiene?",
+        opts: ["El que usa AI escribe menos código, el que no usa más","El que tiene criterio entiende y valida cada output del AI; el que no lo tiene acepta ciegamente lo que genera","El criterio técnico no cambia con el uso de AI","Solo los seniors pueden tener criterio técnico al usar AI"],
+        correct: 1,
+        explain: "El criterio técnico se manifiesta en validar outputs, detectar code smells en código generado, mantener coherencia arquitectural y entender cada línea que entra al codebase, sin importar quién la escribió."
+      },
+      {
+        q: "¿Cómo se transforma una idea en tareas concretas para trabajar con AI en un proyecto real?",
+        opts: ["Se describe la idea completa en un solo mensaje y el AI genera el backlog automáticamente","Se descompone la idea en funcionalidades, cada funcionalidad en módulos, y cada módulo en tareas con inputs, outputs y criterios de aceptación claros","Se copia el backlog de un proyecto similar y se adapta con el AI","Se empieza a codificar directamente y el AI sugiere las tareas según el código que ve"],
+        correct: 1,
+        explain: "La descomposición jerárquica (idea → funcionalidades → módulos → tareas) es el método más efectivo. Cada tarea debe tener una definición de done clara para que el AI pueda generar outputs verificables."
+      },
+      {
+        q: "¿Por qué un developer debe mantener criterio técnico durante una sesión larga de AI-assisted coding?",
+        opts: ["Para cumplir requisitos del área de compliance","Porque el AI puede desviarse del objetivo original, acumular deuda técnica o tomar atajos que funcionan en el corto plazo pero fallan a escala","El criterio solo importa en la fase de arquitectura, no durante el coding","Para poder reportar con precisión cuántas líneas generó el AI vs el developer"],
+        correct: 1,
+        explain: "En sesiones largas, el AI puede optimizar localmente sin ver el impacto global. El developer debe mantener la visión del sistema completo, detectar cuando el AI se aleja de los estándares definidos y corregir el rumbo."
+      },
+      {
+        q: "¿Cómo usa un developer avanzado el AI para el proceso de debugging?",
+        opts: ["Le pasa el error completo sin contexto y espera que el AI lo resuelva solo","Le proporciona el error, el stack trace, el código relevante y el contexto de qué se intentaba lograr; luego evalúa la solución propuesta","Usa el AI solo para errores de sintaxis, nunca para errores de lógica","Evita el AI en debugging porque puede introducir más bugs al corregir"],
+        correct: 1,
+        explain: "El debugging efectivo con AI requiere contexto completo: el error, la traza, el código involucrado y la intención original. Con ese contexto, el AI puede proponer causas raíz y soluciones mucho más precisas."
+      },
+      {
+        q: "¿Qué significa 'development loop' en el contexto de AI-assisted engineering?",
+        opts: ["Un bucle infinito de generación de código sin intervención humana","El ciclo continuo de definir tarea → generar con AI → revisar → validar → iterar hasta cumplir el criterio de aceptación","La rutina diaria de sincronización del developer con el equipo de QA","Un proceso automatizado de CI/CD con IA integrada"],
+        correct: 1,
+        explain: "El development loop es el ciclo iterativo core del trabajo con AI. No es lineal: en cada iteración el developer aporta criterio, el AI genera, y juntos convergen al resultado correcto. Dominar este loop es la habilidad central."
+      },
+      {
+        q: "¿Cómo se documenta un proyecto construido con AI assistance de forma efectiva?",
+        opts: ["El AI genera toda la documentación automáticamente sin revisión del developer","El developer usa el AI para generar borradores de documentación técnica basados en el código real, luego los revisa y complementa con decisiones de diseño y contexto de negocio","La documentación no es necesaria en proyectos con AI porque el código es autoexplicativo","Solo se documenta el código que el developer escribió manualmente, no el generado por AI"],
+        correct: 1,
+        explain: "El AI acelera la documentación pero no puede documentar el 'por qué' de las decisiones. El developer usa el AI para generar la estructura y descripciones técnicas, y aporta el contexto de negocio y las decisiones de diseño que solo él conoce."
+      }
+    ]
+  }
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────
+let currentModule = 0;
+let currentTab = 'video';
+let moduleStates = modules.map(() => ({ completed: false, quizDone: false, score: 0 }));
+let quizState = { current: 0, answered: false, selected: null, correctCount: 0 };
+
+// ─── INIT ────────────────────────────────────────────────────────────────
+function init() {
+  updateNav();
+  renderContent();
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────
+function loadModule(idx) {
+  const navEl = document.getElementById('nav-' + idx);
+  if (navEl.classList.contains('locked')) return;
+  currentModule = idx;
+  currentTab = 'video';
+  updateNav();
+  switchTabVisual('video');
+  renderContent();
+}
+
+function updateNav() {
+  modules.forEach((_, i) => {
+    const el = document.getElementById('nav-' + i);
+    const check = document.getElementById('check-' + i);
+    el.classList.remove('active', 'completed', 'locked');
+
+    if (i === 0 || moduleStates[i - 1].completed) {
+      el.classList.remove('locked');
+    } else {
+      el.classList.add('locked');
+    }
+
+    if (moduleStates[i].completed) el.classList.add('completed');
+    if (i === currentModule) el.classList.add('active');
+
+    check.style.display = moduleStates[i].completed ? 'flex' : 'none';
+  });
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────
+function switchTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderContent();
+}
+
+function switchTabVisual(tab) {
+  const tabs = document.querySelectorAll('.tab');
+  const map = { video: 0, quiz: 1, notes: 2 };
+  tabs.forEach((t, i) => {
+    t.classList.toggle('active', i === map[tab]);
+  });
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────
+function renderContent() {
+  const m = modules[currentModule];
+  const c = document.getElementById('mainContent');
+
+  if (currentTab === 'video') {
+    c.innerHTML = `
+      <div class="module-header">
+        <div class="module-num">${m.num}</div>
+        <div class="module-meta">
+          <div class="module-title">${m.title}</div>
+          <div class="module-desc">${m.desc}</div>
+        </div>
+      </div>
+      <div class="video-block">
+        <div class="video-header">
+          <div class="video-dot"></div>
+          <div class="video-title-bar">${m.videoTitle}</div>
+        </div>
+        <div class="video-player" style="cursor:pointer;" onclick="window.open('${m.videoUrl}','_blank')">
+          <img 
+            src="https://img.youtube.com/vi/${m.videoId}/maxresdefault.jpg"
+            onerror="this.src='https://img.youtube.com/vi/${m.videoId}/hqdefault.jpg'"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"
+            alt="Video thumbnail"
+          />
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,0.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+            <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,0,0,0.9);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(0,0,0,0.5);transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div style="text-align:center;">
+              <div style="color:#fff;font-size:14px;font-weight:600;font-family:'Sora',sans-serif;">Ver video en YouTube</div>
+              <div style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:4px;font-family:'JetBrains Mono',monospace;">Se abrirá en una nueva pestaña</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:4px;">
+        <button class="btn btn-primary" onclick="goToQuiz()">⚡ Ir al Quiz del módulo</button>
+        ${moduleStates[currentModule].completed ? '<span style="color:var(--green);font-size:13px;display:flex;align-items:center;gap:6px;">✓ Módulo completado</span>' : ''}
+      </div>`;
+  } else if (currentTab === 'notes') {
+    c.innerHTML = `
+      <div class="module-header">
+        <div class="module-num">${m.num}</div>
+        <div class="module-meta">
+          <div class="module-title">Conceptos clave</div>
+          <div class="module-desc">Términos esenciales de este módulo</div>
+        </div>
+      </div>
+      <div class="concepts-grid">
+        ${m.concepts.map(c => `<div class="concept-chip"><span>${c.icon}</span>${c.text}</div>`).join('')}
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn btn-primary" onclick="goToQuiz()">⚡ Ir al Quiz</button>
+      </div>`;
+  } else if (currentTab === 'quiz') {
+    if (moduleStates[currentModule].quizDone) {
+      renderScoreCard();
+    } else {
+      renderQuiz();
+    }
+  }
+}
+
+function goToQuiz() {
+  currentTab = 'quiz';
+  switchTabVisual('quiz');
+  quizState = { current: 0, answered: false, selected: null, correctCount: 0 };
+  renderContent();
+}
+
+// ─── QUIZ ─────────────────────────────────────────────────────────────────
+function renderQuiz() {
+  const m = modules[currentModule];
+  const q = m.quiz[quizState.current];
+  const total = m.quiz.length;
+  const c = document.getElementById('mainContent');
+
+  const dots = m.quiz.map((_, i) => {
+    let cls = 'q-dot';
+    if (i < quizState.current) cls += ' done';
+    if (i === quizState.current) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  c.innerHTML = `
+    <div class="quiz-section">
+      <div class="quiz-header">
+        <div class="quiz-header-icon">⚡</div>
+        <div class="quiz-header-text">
+          <div class="quiz-header-title">Quiz – ${m.title}</div>
+          <div class="quiz-header-sub">Valida tu comprensión del módulo</div>
+        </div>
+        <div class="quiz-progress-text">${quizState.current + 1} / ${total}</div>
+      </div>
+      <div class="quiz-body">
+        <div class="question-num">PREGUNTA ${quizState.current + 1} DE ${total}</div>
+        <div class="question-text">${q.q}</div>
+        <div class="options" id="options">
+          ${q.opts.map((opt, i) => `
+            <div class="option" id="opt-${i}" onclick="selectOption(${i})">
+              <div class="option-letter">${['A','B','C','D'][i]}</div>
+              ${opt}
+            </div>`).join('')}
+        </div>
+        <div class="quiz-feedback" id="feedback"></div>
+        <div class="quiz-nav">
+          <div class="q-progress-dots">${dots}</div>
+          <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>
+            ${quizState.current < total - 1 ? 'Siguiente →' : 'Ver resultados'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function selectOption(idx) {
+  if (quizState.answered) return;
+  quizState.answered = true;
+  quizState.selected = idx;
+
+  const m = modules[currentModule];
+  const q = m.quiz[quizState.current];
+  const correct = q.correct;
+  const feedback = document.getElementById('feedback');
+
+  document.querySelectorAll('.option').forEach((el, i) => {
+    if (i === correct) el.classList.add('correct');
+    else if (i === idx && idx !== correct) el.classList.add('wrong');
+  });
+
+  if (idx === correct) {
+    quizState.correctCount++;
+    feedback.className = 'quiz-feedback correct-fb show';
+    feedback.innerHTML = `✓ Correcto — ${q.explain}`;
+  } else {
+    feedback.className = 'quiz-feedback wrong-fb show';
+    feedback.innerHTML = `✗ Incorrecto — La respuesta correcta es <strong>${['A','B','C','D'][correct]}</strong>. ${q.explain}`;
+  }
+
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion() {
+  const m = modules[currentModule];
+  if (quizState.current < m.quiz.length - 1) {
+    quizState.current++;
+    quizState.answered = false;
+    quizState.selected = null;
+    renderQuiz();
+  } else {
+    // Finished quiz
+    const score = quizState.correctCount;
+    moduleStates[currentModule].quizDone = true;
+    moduleStates[currentModule].score = score;
+    moduleStates[currentModule].completed = true;
+    updateXP();
+    updateNav();
+    updateGlobalProgress();
+
+    // Check if all done
+    const allDone = moduleStates.every(s => s.completed);
+    if (allDone) {
+      showCompletion();
+    } else {
+      renderScoreCard();
+    }
+    showNotif(`Módulo ${currentModule + 1} completado +${score * 20}XP`);
+  }
+}
+
+function renderScoreCard() {
+  const m = modules[currentModule];
+  const s = moduleStates[currentModule].score;
+  const total = m.quiz.length;
+  const pct = Math.round((s / total) * 100);
+  const isGood = pct >= 80;
+  const next = currentModule + 1;
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="quiz-section">
+      <div class="quiz-header">
+        <div class="quiz-header-icon">${isGood ? '🏆' : '📊'}</div>
+        <div class="quiz-header-text">
+          <div class="quiz-header-title">Resultado del Quiz</div>
+          <div class="quiz-header-sub">${m.title}</div>
+        </div>
+      </div>
+      <div class="score-card">
+        <div class="score-circle">
+          <div class="score-num">${s}/${total}</div>
+          <div class="score-total">${pct}%</div>
+        </div>
+        <div class="score-label" style="color:${isGood ? 'var(--green)' : 'var(--yellow)'}">${isGood ? '¡Excelente dominio!' : 'Buen intento'}</div>
+        <div class="score-message">${isGood ? 'Demostraste comprensión sólida de los conceptos.' : 'Revisa el video y los conceptos para reforzar los temas.'}</div>
+        <div class="badges">
+          ${s === total ? '<div class="badge badge-gold">🏆 Perfecto</div>' : ''}
+          ${pct >= 80 ? '<div class="badge badge-green">✓ Aprobado</div>' : ''}
+          <div class="badge badge-blue">+${s * 20} XP</div>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          ${next < modules.length && moduleStates[next - 1].completed ? `<button class="btn btn-success" onclick="loadModule(${next})">→ Módulo ${next + 1}</button>` : ''}
+          <button class="btn btn-ghost" onclick="retakeQuiz()">↺ Repetir Quiz</button>
+          <button class="btn btn-ghost" onclick="loadModule(${currentModule})">▶ Ver video</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function retakeQuiz() {
+  moduleStates[currentModule].quizDone = false;
+  quizState = { current: 0, answered: false, selected: null, correctCount: 0 };
+  renderQuiz();
+}
+
+// ─── COMPLETION ───────────────────────────────────────────────────────────
+function showCompletion() {
+  const totalScore = moduleStates.reduce((a, s) => a + s.score, 0);
+  const totalXP = totalScore * 20;
+  document.getElementById('mainContent').innerHTML = `
+    <div class="completion-screen show">
+      <div class="completion-icon">🚀</div>
+      <div class="completion-title">¡Ruta de Aprendizaje Completada!</div>
+      <div class="completion-sub">Has completado los 4 módulos de AI Assisted Engineering. Ahora aplica estos conocimientos en tu entorno real de trabajo y comparte tus aprendizajes con el equipo.</div>
+      <div class="final-stats">
+        <div class="final-stat">
+          <div class="final-stat-num">4/4</div>
+          <div class="final-stat-label">Módulos</div>
+        </div>
+        <div class="final-stat">
+          <div class="final-stat-num">${totalXP}</div>
+          <div class="final-stat-label">XP Total</div>
+        </div>
+        <div class="final-stat">
+          <div class="final-stat-num">${Math.round((totalScore / 40) * 100)}%</div>
+          <div class="final-stat-label">Score global</div>
+        </div>
+      </div>
+      <div class="badges" style="justify-content:center;margin-bottom:28px;">
+        <div class="badge badge-gold">🏆 AI Engineer</div>
+        <div class="badge badge-blue">Claude Code Ready</div>
+        <div class="badge badge-green">Copilot Advanced</div>
+      </div>
+      <button class="btn btn-primary" onclick="location.reload()">↺ Reiniciar ruta</button>
+    </div>`;
+}
+
+// ─── XP & PROGRESS ────────────────────────────────────────────────────────
+function updateXP() {
+  const totalXP = moduleStates.reduce((a, s) => a + s.score * 20, 0);
+  const maxXP = modules.length * 10 * 20;
+  document.getElementById('xpFill').style.width = (totalXP / maxXP * 100) + '%';
+  document.getElementById('xpLabel').textContent = `${totalXP} / ${maxXP} XP`;
+}
+
+function updateGlobalProgress() {
+  const done = moduleStates.filter(s => s.completed).length;
+  const pct = (done / modules.length) * 100;
+  document.getElementById('globalBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${done} / ${modules.length} módulos`;
+}
+
+// ─── NOTIFICATION ─────────────────────────────────────────────────────────
+function showNotif(msg) {
+  const el = document.getElementById('notif');
+  document.getElementById('notifText').textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ─── START ────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
