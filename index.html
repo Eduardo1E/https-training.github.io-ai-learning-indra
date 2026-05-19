@@ -46,8 +46,28 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 .prog-label{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 .prog-bar{width:120px;height:4px;background:var(--border);border-radius:4px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:4px;transition:width .5s ease;}
-.admin-btn{font-size:11px;padding:4px 12px;border-radius:20px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);color:#a78bfa;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;}
-.admin-btn:hover{background:rgba(124,58,237,.25);}
+.admin-btn{font-size:11px;padding:4px 12px;border-radius:20px;background:rgba(255,0,84,.12);border:1px solid rgba(255,0,84,.35);color:#ff6b9d;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;}
+.admin-btn:hover{background:rgba(255,0,84,.2);}
+/* POPUP ID ADMIN */
+.popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(6px);}
+.popup-overlay.show{opacity:1;pointer-events:all;}
+.popup-card{background:var(--card);border:1px solid rgba(255,0,84,.4);border-radius:16px;padding:32px;width:100%;max-width:380px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.7);}
+.popup-icon{font-size:40px;margin-bottom:12px;}
+.popup-title{font-size:18px;font-weight:800;margin-bottom:6px;}
+.popup-sub{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.popup-input{width:100%;padding:14px;background:var(--panel);border:1.5px solid rgba(255,0,84,.3);border-radius:10px;color:var(--text);font-size:20px;font-family:'JetBrains Mono',monospace;outline:none;text-align:center;letter-spacing:.2em;margin-bottom:8px;}
+.popup-input:focus{border-color:#FF0054;}
+.popup-error{font-size:11px;color:var(--red);margin-bottom:12px;min-height:16px;}
+.popup-btn{width:100%;padding:13px;background:#FF0054;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;font-family:'Sora',sans-serif;cursor:pointer;transition:opacity .2s;}
+.popup-btn:hover{opacity:.9;}
+.nav-item.eval-locked{opacity:.35;cursor:not-allowed;}
+.nav-item.eval-locked .nav-icon{background:rgba(239,68,68,.1);color:var(--red);}
+.admin-tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--bg);padding:4px;border-radius:10px;}
+.admin-tab{flex:1;padding:8px;text-align:center;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);cursor:pointer;border-radius:8px;transition:all .2s;}
+.admin-tab.active{background:rgba(255,0,84,.15);color:#ff6b9d;border:1px solid rgba(255,0,84,.3);}
+.admin-panel{display:none;}
+.admin-panel.active{display:block;}
+.btn-cert{background:linear-gradient(135deg,#480E2A,#FF0054);color:#fff;font-weight:700;}
 
 /* LAYOUT */
 .layout{display:flex;flex:1;overflow:hidden;}
@@ -210,6 +230,18 @@ textarea.admin-input{resize:vertical;min-height:80px;}
 </head>
 <body>
 
+<!-- POPUP ID ADMIN -->
+<div class="popup-overlay" id="popupAdmin">
+  <div class="popup-card">
+    <div class="popup-icon">🔐</div>
+    <div class="popup-title">Verificación de Identidad</div>
+    <div class="popup-sub">Ingresa tu ID de empleado para acceder como administrador (6-8 dígitos)</div>
+    <input class="popup-input" id="popup-id-input" type="text" placeholder="••••••••" maxlength="8" inputmode="numeric"/>
+    <div class="popup-error" id="popup-id-error"></div>
+    <button class="popup-btn" onclick="verificarIdAdmin()">Verificar →</button>
+  </div>
+</div>
+
 <!-- REGISTRO -->
 <div class="reg-screen" id="regScreen">
   <div class="reg-card">
@@ -226,6 +258,7 @@ textarea.admin-input{resize:vertical;min-height:80px;}
     <input class="reg-input" id="f-correo" type="email" placeholder="Ej: jperez@indracompany.com" maxlength="80"/>
     <div class="reg-error" id="e-correo">Solo se permite correo @indracompany.com</div>
 
+    <div id="reg-squad-block">
     <label class="reg-label">SQUAD / ÁREA</label>
     <input class="reg-input" id="f-squad" type="text" placeholder="Ej: Data Engineering · Squad Lakehouse" maxlength="60"/>
     <div class="reg-error" id="e-squad">Ingresa tu squad o área</div>
@@ -233,6 +266,7 @@ textarea.admin-input{resize:vertical;min-height:80px;}
     <label class="reg-label">FOCAL POINT</label>
     <input class="reg-input" id="f-focal" type="text" placeholder="Nombre de tu Focal Point" maxlength="60"/>
     <div class="reg-error" id="e-focal">Ingresa el nombre de tu Focal Point</div>
+    </div>
 
     <button class="reg-btn" id="regBtn">Comenzar capacitación →</button>
 
@@ -283,6 +317,11 @@ textarea.admin-input{resize:vertical;min-height:80px;}
       <div class="nav-label"><div class="nav-label-title">Proyecto End-to-End</div><div class="nav-label-sub">Build from scratch</div></div>
       <div class="nav-check" id="check-3">✓</div>
     </div>
+    <div class="nav-item eval-locked" id="nav-eval" onclick="loadEval()">
+      <div class="nav-icon">🔒</div>
+      <div class="nav-label"><div class="nav-label-title">Evaluación Final</div><div class="nav-label-sub">Próximamente</div></div>
+      <div class="nav-check" id="check-eval" style="display:none">✓</div>
+    </div>
     <div class="sidebar-footer">
       <div class="xp-label"><span>XP acumulado</span><span id="xpLabel">0 / 800 XP</span></div>
       <div class="xp-bar"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
@@ -291,7 +330,7 @@ textarea.admin-input{resize:vertical;min-height:80px;}
   <div class="main">
     <div class="tabs">
       <div class="tab active" id="tab-video" onclick="switchTab('video',this)">▶ Video</div>
-      <div class="tab tab-locked" id="tab-quiz" title="Quiz no habilitado aún">🔒 Quiz</div>
+      <div class="tab tab-locked" id="tab-quiz" title="Refuerza lo aprendido no habilitado aún">🔒 Refuerza</div>
       <div class="tab" id="tab-notes" onclick="switchTab('notes',this)">📋 Conceptos</div>
     </div>
     <div class="content" id="mainContent"></div>
@@ -328,25 +367,40 @@ textarea.admin-input{resize:vertical;min-height:80px;}
       <button class="concept-modal-close" style="position:relative;top:auto;right:auto;margin-left:auto" onclick="closeAdmin()">✕</button>
     </div>
     <div class="admin-modal-body">
-
-      <!-- Habilitar quiz -->
-      <div class="admin-section-title">🔓 Habilitar Quiz por correo</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <input class="admin-input" id="admin-correo-input" placeholder="correo@indracompany.com" style="margin-bottom:0;flex:1"/>
-        <button class="btn btn-primary" style="white-space:nowrap" onclick="habilitarUsuario()">+ Habilitar</button>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">También puedes pegar varios correos separados por coma o salto de línea</div>
-
-      <div class="admin-section-title">👥 Usuarios habilitados</div>
-      <div id="lista-habilitados" style="margin-bottom:16px">
-        <div style="font-size:12px;color:var(--muted);font-style:italic">Cargando...</div>
+      <div class="admin-tabs">
+        <div class="admin-tab active" id="atab-usuarios" onclick="switchAdminTab('usuarios',this)">👥 Usuarios</div>
+        <div class="admin-tab" id="atab-admins" onclick="switchAdminTab('admins',this)">🔐 Admins</div>
+        <div class="admin-tab" id="atab-preguntas" onclick="switchAdminTab('preguntas',this)">✏️ Preguntas</div>
+        <div class="admin-tab" id="atab-evaluacion" onclick="switchAdminTab('evaluacion',this)">🎯 Evaluación</div>
       </div>
 
-      <div class="admin-divider"></div>
+      <!-- TAB USUARIOS -->
+      <div class="admin-panel active" id="panel-usuarios">
+        <div class="admin-section-title">🔓 Habilitar Refuerza lo aprendido</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input class="admin-input" id="admin-correo-input" placeholder="correo@indracompany.com" style="margin-bottom:0;flex:1"/>
+          <button class="btn btn-primary" style="white-space:nowrap;background:#FF0054" onclick="habilitarUsuario()">+ Habilitar</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:16px">Puedes pegar varios correos separados por coma o salto de línea</div>
+        <div class="admin-section-title">👥 Usuarios habilitados</div>
+        <div id="lista-habilitados"><div style="font-size:12px;color:var(--muted);font-style:italic">Cargando...</div></div>
+      </div>
 
-      <!-- Editar preguntas -->
-      <div class="admin-section-title">✏️ Editar preguntas del Quiz</div>
-      <div style="margin-bottom:12px">
+      <!-- TAB ADMINS -->
+      <div class="admin-panel" id="panel-admins">
+        <div class="admin-section-title">🔐 Agregar administrador</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Los administradores tendrán acceso completo al panel y podrán habilitar usuarios, editar preguntas y gestionar la evaluación final.</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <input class="admin-input" id="admin-nuevo-admin" placeholder="correo@indracompany.com" style="margin-bottom:0;flex:1"/>
+          <button class="btn btn-primary" style="white-space:nowrap;background:#FF0054" onclick="agregarAdmin()">+ Agregar</button>
+        </div>
+        <div class="admin-section-title">Administradores activos</div>
+        <div id="lista-admins"></div>
+      </div>
+
+      <!-- TAB PREGUNTAS -->
+      <div class="admin-panel" id="panel-preguntas">
+        <div class="admin-section-title">✏️ Editar preguntas del Refuerza</div>
         <select class="admin-input" id="admin-mod-select" onchange="cargarPreguntasAdmin()" style="margin-bottom:8px">
           <option value="0">Módulo 01 – Engineering Harness</option>
           <option value="1">Módulo 02 – Buenas Prácticas</option>
@@ -354,27 +408,49 @@ textarea.admin-input{resize:vertical;min-height:80px;}
           <option value="3">Módulo 04 – End-to-End</option>
         </select>
         <select class="admin-input" id="admin-preg-select" onchange="cargarPreguntaAdmin()" style="margin-bottom:8px"></select>
-      </div>
-      <div id="admin-preg-form" style="display:none">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Pregunta</div>
-        <textarea class="admin-input" id="admin-preg-texto" rows="3"></textarea>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Opciones (A, B, C, D)</div>
-        <input class="admin-input" id="admin-opt-0" placeholder="Opción A"/>
-        <input class="admin-input" id="admin-opt-1" placeholder="Opción B"/>
-        <input class="admin-input" id="admin-opt-2" placeholder="Opción C"/>
-        <input class="admin-input" id="admin-opt-3" placeholder="Opción D"/>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Respuesta correcta</div>
-        <select class="admin-input" id="admin-correct">
-          <option value="0">A</option>
-          <option value="1">B</option>
-          <option value="2">C</option>
-          <option value="3">D</option>
-        </select>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Explicación</div>
-        <textarea class="admin-input" id="admin-explain" rows="3"></textarea>
-        <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="guardarPregunta()">💾 Guardar pregunta</button>
+        <div id="admin-preg-form" style="display:none">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Pregunta</div>
+          <textarea class="admin-input" id="admin-preg-texto" rows="3" style="resize:vertical"></textarea>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Opciones</div>
+          <input class="admin-input" id="admin-opt-0" placeholder="Opción A"/>
+          <input class="admin-input" id="admin-opt-1" placeholder="Opción B"/>
+          <input class="admin-input" id="admin-opt-2" placeholder="Opción C"/>
+          <input class="admin-input" id="admin-opt-3" placeholder="Opción D"/>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Respuesta correcta</div>
+          <select class="admin-input" id="admin-correct">
+            <option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>
+          </select>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Explicación</div>
+          <textarea class="admin-input" id="admin-explain" rows="3" style="resize:vertical"></textarea>
+          <button class="btn btn-primary" style="width:100%;margin-top:8px;background:#FF0054" onclick="guardarPregunta()">💾 Guardar pregunta</button>
+        </div>
       </div>
 
+      <!-- TAB EVALUACION -->
+      <div class="admin-panel" id="panel-evaluacion">
+        <div class="admin-section-title">🎯 Evaluación Final</div>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:600">Estado</div>
+            <div id="eval-estado-badge" style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)">🔒 Inhabilitada</div>
+          </div>
+          <button class="btn" id="eval-toggle-btn" style="background:#FF0054;color:#fff;width:100%" onclick="toggleEvaluacion()">🔓 Habilitar Evaluación Final</button>
+        </div>
+        <div class="admin-section-title">+ Nueva pregunta</div>
+        <textarea class="admin-input" id="eval-preg-nueva" placeholder="Escribe la pregunta..." rows="2" style="resize:vertical"></textarea>
+        <input class="admin-input" id="eval-opt-new-0" placeholder="Opción A"/>
+        <input class="admin-input" id="eval-opt-new-1" placeholder="Opción B"/>
+        <input class="admin-input" id="eval-opt-new-2" placeholder="Opción C"/>
+        <input class="admin-input" id="eval-opt-new-3" placeholder="Opción D"/>
+        <select class="admin-input" id="eval-correct-new">
+          <option value="0">A - Correcta</option><option value="1">B - Correcta</option><option value="2">C - Correcta</option><option value="3">D - Correcta</option>
+        </select>
+        <textarea class="admin-input" id="eval-explain-new" placeholder="Explicación de la respuesta..." rows="2" style="resize:vertical"></textarea>
+        <button class="btn btn-primary" style="width:100%;background:#FF0054" onclick="agregarPreguntaEval()">+ Agregar pregunta</button>
+        <div style="height:1px;background:var(--border);margin:16px 0"></div>
+        <div class="admin-section-title">Preguntas actuales (<span id="eval-count">0</span>)</div>
+        <div id="lista-preguntas-eval"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -484,13 +560,16 @@ const modules = [
 
 // ══ STATE ═════════════════════════════════════════════════════
 let userName='', userEmail='', userSquad='', userFocal='';
-let currentModule=0, currentTab='video';
+let currentModule=0, currentTab='video', currentView='module';
 let moduleStates = modules.map(()=>({completed:false,quizDone:false,score:0}));
-let quizState = {current:0,answered:false,selected:null,correctCount:0};
+let quizState = {current:0,answered:false,selected:null,correctCount:0,preguntas:[]};
 let quizHabilitado = false;
 let esAdmin = false;
-const NOTA_MINIMA = 7;
-const ADMINS = ['drimas@indracompany.com','ejescusa@indracompany.com'];
+let evalPreguntas = [];
+let evalHabilitada = false;
+let adminsList = ['drimas@indracompany.com','ejescusa@indracompany.com'];
+const NOTA_MINIMA = 4; // de 5 preguntas aleatorias
+const NOTA_MINIMA_EVAL = 7;
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycby3hJL8WUmGWom8gwUSv0dWvVIyhBjCn5aqdY3Vvc7SW7nXiug7_R8ZCnhOqLOa4y8/exec';
 const FORMSUBMIT_EMAIL = 'ejescusa@indracompany.com';
 
@@ -517,78 +596,116 @@ function validate(id, errId, condition) {
 // ══ REGISTRO ══════════════════════════════════════════════════
 async function startLearning() {
   const nombre = document.getElementById('f-nombre').value.trim();
-  const correo = document.getElementById('f-correo').value.trim();
-  const squad  = document.getElementById('f-squad').value.trim();
-  const focal  = document.getElementById('f-focal').value.trim();
+  const correo = document.getElementById('f-correo').value.trim().toLowerCase();
 
-  const ok = [
-    validate('f-nombre','e-nombre', esNombreValido(nombre)),
-    validate('f-correo','e-correo', esCorreoValido(correo)),
-    validate('f-squad', 'e-squad',  squad.length >= 2),
-    validate('f-focal', 'e-focal',  focal.length >= 2),
+  if (!validate('f-nombre','e-nombre', esNombreValido(nombre))) return;
+  if (!validate('f-correo','e-correo', esCorreoValido(correo))) return;
+
+  const isAdmin = adminsList.includes(correo);
+
+  if (isAdmin) {
+    // Admin: solo nombre y correo, luego popup ID
+    userName=nombre; userEmail=correo; userSquad='Admin'; userFocal='Admin'; esAdmin=true;
+    document.getElementById('popupAdmin').classList.add('show');
+    document.getElementById('popup-id-input').value='';
+    document.getElementById('popup-id-error').textContent='';
+    setTimeout(()=>document.getElementById('popup-id-input').focus(),300);
+    return;
+  }
+
+  // Usuario normal: validar squad y focal
+  const squad=document.getElementById('f-squad').value.trim();
+  const focal=document.getElementById('f-focal').value.trim();
+  const ok=[
+    validate('f-squad','e-squad',squad.length>=2),
+    validate('f-focal','e-focal',focal.length>=2)
   ].every(Boolean);
-
   if (!ok) return;
 
-  userName=nombre; userEmail=correo.toLowerCase(); userSquad=squad; userFocal=focal;
+  userName=nombre; userEmail=correo; userSquad=squad; userFocal=focal; esAdmin=false;
+  await finalizarRegistro();
+}
 
-  // Verificar si es admin o tiene quiz habilitado
-  esAdmin = ADMINS.includes(userEmail);
-  await verificarHabilitacion();
+function verificarIdAdmin() {
+  const id=document.getElementById('popup-id-input').value.trim();
+  const errEl=document.getElementById('popup-id-error');
+  if (id.length<6||id.length>8||!/^\d+$/.test(id)) {
+    errEl.textContent='El ID debe tener entre 6 y 8 dígitos numéricos'; return;
+  }
+  document.getElementById('popupAdmin').classList.remove('show');
+  finalizarRegistro();
+}
+
+async function finalizarRegistro() {
+  quizHabilitado=esAdmin;
+  if (!esAdmin) await verificarHabilitacion();
 
   document.getElementById('regScreen').classList.add('hidden');
-  document.getElementById('topbarUser').innerHTML = `👤 <span>${userName}</span>`;
-  if (esAdmin) document.getElementById('adminBtn').style.display = 'flex';
+  document.getElementById('topbarUser').innerHTML=`👤 <span>${userName}</span>${esAdmin?' <span style="color:#FF0054;font-size:10px;margin-left:4px">ADMIN</span>':''}`;
+  if (esAdmin) document.getElementById('adminBtn').style.display='flex';
 
   actualizarTabQuiz();
+  actualizarNavEval();
   updateNav(); renderContent();
 
-  const fechaIngreso = new Date().toLocaleString('es-PE', {
-    year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
-  });
-  enviarASheets({
-    accion: 'registrar',
-    nombre: userName, correo: userEmail, squad: userSquad, focal: userFocal,
-    scoreGlobal: 'En progreso', modulos: '0/4', xp: '0 XP',
-    resultado: 'INGRESÓ', detalle: '', fecha: fechaIngreso
-  });
+  const fechaIngreso=new Date().toLocaleString('es-PE',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  enviarASheets({accion:'registrar',nombre:userName,correo:userEmail,squad:userSquad,focal:userFocal,
+    scoreGlobal:'En progreso',modulos:'0/4',xp:'0 XP',resultado:'INGRESÓ',detalle:'',fecha:fechaIngreso});
 }
 
 async function verificarHabilitacion() {
-  if (esAdmin) { quizHabilitado = true; return; }
+  if (esAdmin) { quizHabilitado=true; return; }
   try {
-    const params = new URLSearchParams({ accion: 'verificar', correo: userEmail });
-    const resp = await fetch(`${SHEETS_URL}?${params.toString()}`, { method:'GET', mode:'cors' });
-    const data = await resp.json();
-    quizHabilitado = data.habilitado || false;
-  } catch(e) {
-    quizHabilitado = false;
-  }
+    const params=new URLSearchParams({accion:'verificar',correo:userEmail});
+    const resp=await fetch(`${SHEETS_URL}?${params.toString()}`,{method:'GET',mode:'cors'});
+    const data=await resp.json();
+    quizHabilitado=data.habilitado||false;
+  } catch(e) { quizHabilitado=false; }
 }
 
 function actualizarTabQuiz() {
-  const tabQuiz = document.getElementById('tab-quiz');
+  const tabQuiz=document.getElementById('tab-quiz');
   if (quizHabilitado) {
-    tabQuiz.className = 'tab';
-    tabQuiz.title = '';
-    tabQuiz.innerHTML = '⚡ Quiz';
-    tabQuiz.onclick = function() { switchTab('quiz', this); };
+    tabQuiz.className='tab'; tabQuiz.title='';
+    tabQuiz.innerHTML='⚡ Refuerza';
+    tabQuiz.onclick=function(){switchTab('quiz',this);};
   } else {
-    tabQuiz.className = 'tab tab-locked';
-    tabQuiz.title = 'Quiz no habilitado. Contacta a tu Focal Point.';
-    tabQuiz.innerHTML = '🔒 Quiz';
-    tabQuiz.onclick = function() {
-      showNotif('Quiz no habilitado. Contacta a tu Focal Point.');
-    };
+    tabQuiz.className='tab tab-locked';
+    tabQuiz.title='Refuerza lo aprendido no habilitado aún';
+    tabQuiz.innerHTML='🔒 Refuerza';
+    tabQuiz.onclick=function(){showNotif('Refuerza lo aprendido no habilitado. Contacta a tu Focal Point.');};
+  }
+}
+
+function actualizarNavEval() {
+  const navEval=document.getElementById('nav-eval');
+  if (evalHabilitada||esAdmin) {
+    navEval.className='nav-item';
+    navEval.querySelector('.nav-icon').textContent='🎯';
+    navEval.querySelector('.nav-label-title').textContent='Evaluación Final';
+    navEval.querySelector('.nav-label-sub').textContent='Evaluación global';
+  } else {
+    navEval.className='nav-item eval-locked';
+    navEval.querySelector('.nav-icon').textContent='🔒';
+    navEval.querySelector('.nav-label-title').textContent='Evaluación Final';
+    navEval.querySelector('.nav-label-sub').textContent='Próximamente';
   }
 }
 
 // Enter entre campos
 window.addEventListener('DOMContentLoaded', () => {
   [['f-nombre','f-correo'],['f-correo','f-squad'],['f-squad','f-focal']].forEach(([a,b])=>{
-    document.getElementById(a).addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById(b).focus(); });
+    document.getElementById(a).addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById(b)?.focus(); });
   });
   document.getElementById('f-focal').addEventListener('keydown',e=>{ if(e.key==='Enter') startLearning(); });
+  // Ocultar squad/focal si es admin
+  document.getElementById('f-correo').addEventListener('input',e=>{
+    const correo=e.target.value.trim().toLowerCase();
+    const isAdmin=adminsList.includes(correo);
+    const squadBlock=document.getElementById('reg-squad-block');
+    if(squadBlock) squadBlock.style.display=isAdmin?'none':'block';
+  });
+  document.getElementById('popup-id-input').addEventListener('keydown',e=>{ if(e.key==='Enter') verificarIdAdmin(); });
   document.getElementById('regBtn').addEventListener('click', startLearning);
   document.getElementById('conceptClose').addEventListener('click',()=>document.getElementById('conceptOverlay').classList.remove('show'));
   document.getElementById('conceptOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('conceptOverlay')) document.getElementById('conceptOverlay').classList.remove('show'); });
@@ -597,22 +714,28 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ══ NAV ═══════════════════════════════════════════════════════
 function loadModule(idx) {
-  if (document.getElementById('nav-'+idx).classList.contains('locked')) return;
-  currentModule=idx; currentTab='video'; updateNav(); switchTabVisual('video'); renderContent();
+  if (!esAdmin && document.getElementById('nav-'+idx).classList.contains('locked')) return;
+  currentModule=idx; currentTab='video'; currentView='module';
+  updateNav(); switchTabVisual('video'); renderContent();
+}
+function loadEval() {
+  if (!evalHabilitada && !esAdmin) { showNotif('Evaluación Final no habilitada aún.'); return; }
+  currentView='eval'; updateNav(); renderEval();
 }
 function updateNav() {
   modules.forEach((_,i)=>{
     const el=document.getElementById('nav-'+i), ck=document.getElementById('check-'+i);
     el.classList.remove('active','completed','locked');
-    if (i>0 && !moduleStates[i-1].completed) el.classList.add('locked');
+    if (!esAdmin && i>0 && !moduleStates[i-1].completed) el.classList.add('locked');
     if (moduleStates[i].completed) el.classList.add('completed');
-    if (i===currentModule) el.classList.add('active');
+    if (i===currentModule && currentView==='module') el.classList.add('active');
     ck.style.display = moduleStates[i].completed ? 'flex':'none';
   });
+  if (currentView==='eval') document.getElementById('nav-eval').classList.add('active');
 }
 function switchTab(tab,el) {
-  if (!quizHabilitado && tab==='quiz') { showNotif('Quiz no habilitado. Contacta a tu Focal Point.'); return; }
-  currentTab=tab;
+  if (!quizHabilitado && !esAdmin && tab==='quiz') { showNotif('Refuerza lo aprendido no habilitado. Contacta a tu Focal Point.'); return; }
+  currentTab=tab; currentView='module';
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active'); renderContent();
 }
@@ -624,7 +747,14 @@ function switchTabVisual(tab) {
 
 // ══ RENDER ════════════════════════════════════════════════════
 function renderContent() {
+  if (currentView==='eval') { renderEval(); return; }
   const m=modules[currentModule], c=document.getElementById('mainContent');
+  const quizBtn = quizHabilitado||esAdmin
+    ? `<button class="btn btn-primary" onclick="goToQuiz()">⚡ Refuerza lo aprendido</button>`
+    : `<button class="btn btn-ghost" style="cursor:not-allowed;opacity:.5" title="No habilitado">🔒 Refuerza lo aprendido</button>`;
+  const adminSkip = esAdmin
+    ? `<button class="btn" style="background:rgba(255,0,84,.15);border:1px solid rgba(255,0,84,.3);color:#ff6b9d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="skipModule(${currentModule})">⏭ Avanzar módulo (Admin)</button>`
+    : '';
   if (currentTab==='video') {
     c.innerHTML=`
       <div class="module-header">
@@ -641,8 +771,8 @@ function renderContent() {
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:12px;align-items:center;margin-top:4px">
-        ${quizHabilitado ? `<button class="btn btn-primary" onclick="goToQuiz()">⚡ Ir al Quiz</button>` : `<button class="btn btn-ghost" style="cursor:not-allowed;opacity:.5" title="Quiz no habilitado">🔒 Quiz no habilitado</button>`}
+      <div style="display:flex;gap:12px;align-items:center;margin-top:4px;flex-wrap:wrap">
+        ${quizBtn} ${adminSkip}
         ${moduleStates[currentModule].completed?'<span style="color:var(--green);font-size:13px">✓ Módulo completado</span>':''}
       </div>`;
   } else if (currentTab==='notes') {
@@ -654,29 +784,41 @@ function renderContent() {
       <div class="concepts-grid">
         ${m.concepts.map((con,i)=>`<div class="concept-chip" onclick="openConcept(${currentModule},${i})"><span>${con.icon}</span>${con.text}<span class="chip-arrow">▶</span></div>`).join('')}
       </div>
-      ${quizHabilitado ? `<button class="btn btn-primary" onclick="goToQuiz()">⚡ Ir al Quiz</button>` : `<button class="btn btn-ghost" style="cursor:not-allowed;opacity:.5">🔒 Quiz no habilitado</button>`}`;
+      <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">${quizBtn} ${adminSkip}</div>`;
   } else {
-    if (!quizHabilitado) { currentTab='video'; switchTabVisual('video'); renderContent(); return; }
+    if (!quizHabilitado && !esAdmin) { currentTab='video'; switchTabVisual('video'); renderContent(); return; }
     if (moduleStates[currentModule].quizDone) renderScoreCard(); else renderQuiz();
   }
 }
 
+function skipModule(idx) {
+  moduleStates[idx]={completed:true,quizDone:true,score:5};
+  updateXP(); updateNav(); updateGlobalProgress();
+  showNotif(`Módulo ${idx+1} avanzado ✓`);
+  if (idx+1<modules.length) { currentModule=idx+1; currentTab='video'; switchTabVisual('video'); renderContent(); }
+  else showCompletion();
+}
+
 function goToQuiz() {
-  if (!quizHabilitado) { showNotif('Quiz no habilitado. Contacta a tu Focal Point.'); return; }
-  currentTab='quiz'; switchTabVisual('quiz');
-  quizState={current:0,answered:false,selected:null,correctCount:0};
+  if (!quizHabilitado && !esAdmin) { showNotif('Refuerza lo aprendido no habilitado.'); return; }
+  currentTab='quiz'; currentView='module'; switchTabVisual('quiz');
+  // 5 preguntas aleatorias del pool de 10
+  const pool=[...modules[currentModule].quiz];
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  quizState={current:0,answered:false,selected:null,correctCount:0,preguntas:pool.slice(0,5)};
   renderContent();
 }
 
-// ══ QUIZ ══════════════════════════════════════════════════════
+// ══ REFUERZA LO APRENDIDO ════════════════════════════════════
 function renderQuiz() {
-  const m=modules[currentModule], q=m.quiz[quizState.current], total=m.quiz.length;
-  const dots=m.quiz.map((_,i)=>`<div class="q-dot${i<quizState.current?' done':i===quizState.current?' current':''}"></div>`).join('');
+  const preguntas=quizState.preguntas||[], q=preguntas[quizState.current], total=preguntas.length;
+  if(!q){goToQuiz();return;}
+  const dots=preguntas.map((_,i)=>`<div class="q-dot${i<quizState.current?' done':i===quizState.current?' current':''}"></div>`).join('');
   document.getElementById('mainContent').innerHTML=`
     <div class="quiz-section">
       <div class="quiz-header">
         <div class="quiz-header-icon">⚡</div>
-        <div><div class="quiz-header-title">Quiz – ${m.title}</div><div class="quiz-header-sub">Mínimo 7/10 para avanzar</div></div>
+        <div><div class="quiz-header-title">Refuerza lo aprendido – ${modules[currentModule].title}</div><div class="quiz-header-sub">Mínimo ${NOTA_MINIMA}/${total} para avanzar</div></div>
         <div class="quiz-progress-text">${quizState.current+1} / ${total}</div>
       </div>
       <div class="quiz-body">
@@ -697,7 +839,7 @@ function renderQuiz() {
 function selectOpt(idx) {
   if (quizState.answered) return;
   quizState.answered=true; quizState.selected=idx;
-  const q=modules[currentModule].quiz[quizState.current];
+  const q=quizState.preguntas[quizState.current];
   document.querySelectorAll('.option').forEach((el,i)=>{
     if(i===q.correct) el.classList.add('correct');
     else if(i===idx && idx!==q.correct) el.classList.add('wrong');
@@ -710,8 +852,8 @@ function selectOpt(idx) {
 }
 
 function nextQ() {
-  const m=modules[currentModule];
-  if (quizState.current<m.quiz.length-1) {
+  const total=quizState.preguntas.length;
+  if (quizState.current<total-1) {
     quizState.current++; quizState.answered=false; quizState.selected=null; renderQuiz();
   } else {
     const score=quizState.correctCount, aprobado=score>=NOTA_MINIMA;
@@ -721,13 +863,13 @@ function nextQ() {
     updateXP(); updateNav(); updateGlobalProgress();
     if (aprobado && moduleStates.every(s=>s.completed)) showCompletion();
     else renderScoreCard();
-    showNotif(aprobado?`Módulo ${currentModule+1} aprobado ✓ +${score*20} XP`:`Score: ${score}/10 — Necesitas 7 para avanzar`);
+    showNotif(aprobado?`Módulo ${currentModule+1} aprobado ✓ +${score*40} XP`:`Score: ${score}/${total} — Necesitas ${NOTA_MINIMA} para avanzar`);
   }
 }
 
 function renderScoreCard() {
   const m=modules[currentModule], s=moduleStates[currentModule].score;
-  const total=m.quiz.length, pct=Math.round((s/total)*100);
+  const total=quizState.preguntas.length||5, pct=Math.round((s/total)*100);
   const aprobado=s>=NOTA_MINIMA, perfecto=s===total, next=currentModule+1;
   const color=perfecto?'var(--green)':aprobado?'var(--accent)':'var(--red)';
   document.getElementById('mainContent').innerHTML=`
@@ -741,7 +883,7 @@ function renderScoreCard() {
         <div class="score-circle"><div class="score-num" style="color:${color}">${s}/${total}</div><div class="score-total">${pct}%</div></div>
         ${!aprobado?`<div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:12px"><span style="font-size:22px">🔒</span><div><div style="font-size:13px;font-weight:700;color:var(--red)">Módulo bloqueado</div><div style="font-size:12px;color:#fca5a5;margin-top:2px">Mínimo: ${NOTA_MINIMA}/${total} · Tu score: ${s}/${total}</div></div></div>`:''}
         <div style="font-size:18px;font-weight:700;color:${color};margin-bottom:8px">${perfecto?'¡Perfecto! Dominio total':aprobado?'¡Aprobado! Puedes continuar':'No aprobado — Debes repetir'}</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:24px">${aprobado?'Alcanzaste el mínimo requerido.':'Necesitas 7/10 (70%) para avanzar. Revisa el video y los conceptos.'}</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:24px">${aprobado?'Alcanzaste el mínimo requerido.':'Necesitas '+NOTA_MINIMA+'/'+total+' para avanzar. Revisa el video y los conceptos.'}</div>
         <div class="badges">
           ${perfecto?'<div class="badge badge-gold">🏆 Perfecto</div>':''}
           ${aprobado?'<div class="badge badge-green">✓ Aprobado</div>':'<div class="badge" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:var(--red)">✗ No aprobado</div>'}
@@ -749,30 +891,29 @@ function renderScoreCard() {
         </div>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
           ${aprobado&&next<modules.length?`<button class="btn btn-success" onclick="loadModule(${next})">→ Módulo ${next+1}</button>`:''}
-          <button class="btn ${aprobado?'btn-ghost':'btn-primary'}" onclick="retakeQuiz()">${aprobado?'↺ Repetir Quiz':'↺ Volver a intentar'}</button>
+          <button class="btn ${aprobado?'btn-ghost':'btn-primary'}" onclick="retakeQuiz()">${aprobado?'↺ Repetir':'↺ Volver a intentar'}</button>
           <button class="btn btn-ghost" onclick="loadModule(${currentModule})">▶ Ver video</button>
         </div>
-        ${!aprobado?`<div style="margin-top:20px;padding:12px 16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);text-align:left">💡 <strong style="color:var(--text)">Consejo:</strong> Revisa <strong style="color:var(--accent)">📋 Conceptos</strong> antes de volver a intentarlo.</div>`:''}
+        ${!aprobado?`<div style="margin-top:20px;padding:12px 16px;background:var(--bg);border-radius:8px;border:1px solid var(--border);font-size:12px;color:var(--muted);text-align:left">💡 Revisa <strong style="color:var(--accent)">📋 Conceptos</strong> antes de volver a intentarlo.</div>`:''}
       </div>
     </div>`;
 }
 
 function retakeQuiz() {
   moduleStates[currentModule]={completed:false,quizDone:false,score:0};
-  quizState={current:0,answered:false,selected:null,correctCount:0};
-  updateNav(); updateGlobalProgress(); renderQuiz();
+  updateNav(); updateGlobalProgress(); goToQuiz();
 }
 
 // ══ COMPLETION ════════════════════════════════════════════════
 function showCompletion() {
   const totalScore=moduleStates.reduce((a,s)=>a+s.score,0);
-  const totalXP=totalScore*20, pct=Math.round((totalScore/40)*100);
+  const totalXP=totalScore*40, pct=Math.round((totalScore/20)*100);
   enviarResumenFinal(totalScore,pct,totalXP);
   document.getElementById('mainContent').innerHTML=`
     <div class="completion-screen">
       <div style="font-size:64px;margin-bottom:20px">🏆</div>
       <div style="font-size:28px;font-weight:800;margin-bottom:12px">¡Felicitaciones, ${userName}!</div>
-      <div style="font-size:14px;color:var(--muted);max-width:480px;margin:0 auto 24px;line-height:1.6">Participaste y completaste los 4 módulos de AI Assisted Engineering.</div>
+      <div style="font-size:14px;color:var(--muted);max-width:480px;margin:0 auto 24px;line-height:1.6">Completaste los 4 módulos de AI Assisted Engineering.</div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 24px;margin-bottom:24px;text-align:left;max-width:480px;margin-left:auto;margin-right:auto">
         <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent);letter-spacing:.1em;margin-bottom:12px">DATOS REGISTRADOS</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:12px">
@@ -801,13 +942,56 @@ function showCompletion() {
 
 // ══ ADMIN PANEL ═══════════════════════════════════════════════
 function openAdmin() {
-  document.getElementById('adminSubtitle').textContent = userEmail;
+  document.getElementById('adminSubtitle').textContent=userEmail;
   document.getElementById('adminOverlay').classList.add('show');
+  // activar tab usuarios por defecto
+  switchAdminTab('usuarios', document.getElementById('atab-usuarios'));
   cargarListaHabilitados();
+  renderListaAdmins();
   cargarPreguntasAdmin();
+  renderPreguntasEval();
 }
-function closeAdmin() {
-  document.getElementById('adminOverlay').classList.remove('show');
+function closeAdmin() { document.getElementById('adminOverlay').classList.remove('show'); }
+
+function switchAdminTab(tab, el) {
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const panel=document.getElementById('panel-'+tab);
+  if(panel) panel.classList.add('active');
+}
+
+function renderListaAdmins() {
+  const lista=document.getElementById('lista-admins');
+  if(!lista) return;
+  lista.innerHTML=adminsList.map(a=>`
+    <div class="habilitado-item">
+      <span class="habilitado-correo">${a}</span>
+      ${a===userEmail
+        ? '<span style="font-size:10px;color:var(--muted)">Tú</span>'
+        : adminsList.length>1
+          ? `<button class="btn btn-danger" onclick="quitarAdmin('${a}')">✕ Quitar</button>`
+          : '<span style="font-size:10px;color:var(--muted)">Último admin</span>'}
+    </div>`).join('');
+}
+
+function agregarAdmin() {
+  const correo=document.getElementById('admin-nuevo-admin').value.trim().toLowerCase();
+  if(!correo.endsWith('@indracompany.com')||correo.length<='@indracompany.com'.length) {
+    showNotif('Correo inválido — debe ser @indracompany.com'); return;
+  }
+  if(adminsList.includes(correo)){showNotif('Ya es administrador'); return;}
+  adminsList.push(correo);
+  document.getElementById('admin-nuevo-admin').value='';
+  renderListaAdmins();
+  showNotif(`${correo} agregado como admin ✓`);
+}
+
+function quitarAdmin(correo) {
+  if(correo===userEmail){showNotif('No puedes quitarte a ti mismo'); return;}
+  adminsList=adminsList.filter(a=>a!==correo);
+  renderListaAdmins();
+  showNotif(`${correo} removido de admins ✓`);
 }
 
 async function cargarListaHabilitados() {
@@ -832,20 +1016,19 @@ async function cargarListaHabilitados() {
 }
 
 async function habilitarUsuario() {
-  const input = document.getElementById('admin-correo-input').value.trim();
-  if (!input) return;
-  const correos = input.split(/[\n,]+/).map(c=>c.trim().toLowerCase()).filter(c=>c.includes('@'));
-  if (correos.length === 0) { showNotif('Ingresa al menos un correo válido'); return; }
-
+  const input=document.getElementById('admin-correo-input').value.trim();
+  if(!input) return;
+  const correos=input.split(/[\n,]+/).map(c=>c.trim().toLowerCase()).filter(c=>c.includes('@'));
+  if(correos.length===0){showNotif('Ingresa al menos un correo válido'); return;}
   try {
-    const params = new URLSearchParams({ accion: 'habilitar', admin: userEmail, correos: JSON.stringify(correos) });
-    await fetch(`${SHEETS_URL}?${params.toString()}`, { method:'GET', mode:'no-cors' });
-    document.getElementById('admin-correo-input').value = '';
+    for(const correo of correos){
+      const params=new URLSearchParams({accion:'habilitar',admin:userEmail,correo});
+      await fetch(`${SHEETS_URL}?${params.toString()}`,{method:'GET',mode:'no-cors'});
+    }
+    document.getElementById('admin-correo-input').value='';
     showNotif(`${correos.length} correo(s) habilitado(s) ✓`);
-    setTimeout(cargarListaHabilitados, 1500);
-  } catch(e) {
-    showNotif('Error al habilitar');
-  }
+    setTimeout(cargarListaHabilitados,2000);
+  } catch(e){showNotif('Error al habilitar');}
 }
 
 async function deshabilitarUsuario(correo) {
@@ -887,9 +1070,155 @@ function guardarPregunta() {
   modules[modIdx].quiz[pregIdx].opts = [0,1,2,3].map(i => document.getElementById(`admin-opt-${i}`).value.trim());
   modules[modIdx].quiz[pregIdx].correct = parseInt(document.getElementById('admin-correct').value);
   modules[modIdx].quiz[pregIdx].explain = document.getElementById('admin-explain').value.trim();
-  // Actualizar selector
   cargarPreguntasAdmin();
   showNotif('Pregunta actualizada ✓');
+}
+
+// ══ EVALUACIÓN FINAL ══════════════════════════════════════════
+function toggleEvaluacion() {
+  evalHabilitada=!evalHabilitada;
+  const badge=document.getElementById('eval-estado-badge'), btn=document.getElementById('eval-toggle-btn');
+  if(evalHabilitada){
+    badge.style.cssText='font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.3);color:var(--green)';
+    badge.textContent='✓ Habilitada';
+    btn.textContent='🔒 Deshabilitar Evaluación Final';
+  } else {
+    badge.style.cssText='font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)';
+    badge.textContent='🔒 Inhabilitada';
+    btn.textContent='🔓 Habilitar Evaluación Final';
+  }
+  actualizarNavEval();
+  showNotif(evalHabilitada?'Evaluación Final habilitada ✓':'Evaluación Final inhabilitada');
+}
+
+function agregarPreguntaEval() {
+  const q=document.getElementById('eval-preg-nueva').value.trim();
+  const opts=[0,1,2,3].map(i=>document.getElementById(`eval-opt-new-${i}`).value.trim());
+  const correct=parseInt(document.getElementById('eval-correct-new').value);
+  const explain=document.getElementById('eval-explain-new').value.trim();
+  if(!q||opts.some(o=>!o)){showNotif('Completa todos los campos'); return;}
+  evalPreguntas.push({q,opts,correct,explain});
+  document.getElementById('eval-preg-nueva').value='';
+  [0,1,2,3].forEach(i=>document.getElementById(`eval-opt-new-${i}`).value='');
+  document.getElementById('eval-explain-new').value='';
+  renderPreguntasEval();
+  showNotif('Pregunta de evaluación agregada ✓');
+}
+
+function renderPreguntasEval() {
+  const countEl=document.getElementById('eval-count');
+  if(countEl) countEl.textContent=evalPreguntas.length;
+  const lista=document.getElementById('lista-preguntas-eval');
+  if(!lista) return;
+  if(evalPreguntas.length===0){
+    lista.innerHTML='<div style="font-size:12px;color:var(--muted);font-style:italic">Sin preguntas aún</div>'; return;
+  }
+  lista.innerHTML=evalPreguntas.map((p,i)=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--text);flex:1">P${i+1}: ${p.q}</div>
+        <button class="btn btn-danger" onclick="quitarPreguntaEval(${i})">✕</button>
+      </div>
+      <div style="font-size:11px;color:var(--green);margin-top:4px">✓ ${p.opts[p.correct]}</div>
+    </div>`).join('');
+}
+
+function quitarPreguntaEval(idx) {
+  evalPreguntas.splice(idx,1);
+  renderPreguntasEval();
+  showNotif('Pregunta eliminada ✓');
+}
+
+function renderEval() {
+  const c=document.getElementById('mainContent');
+  if(!evalHabilitada && !esAdmin){
+    c.innerHTML=`<div style="text-align:center;padding:60px 24px">
+      <div style="font-size:60px;margin-bottom:20px">🔒</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px">Evaluación Final</div>
+      <div style="font-size:13px;color:var(--muted)">No habilitada aún. Tu Focal Point te avisará cuando esté disponible.</div>
+    </div>`; return;
+  }
+  if(evalPreguntas.length===0){
+    c.innerHTML=`<div style="text-align:center;padding:60px 24px">
+      <div style="font-size:60px;margin-bottom:20px">📋</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px">Evaluación Final</div>
+      <div style="font-size:13px;color:var(--muted)">El administrador aún no ha cargado preguntas.</div>
+    </div>`; return;
+  }
+  const pool=[...evalPreguntas];
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  quizState={current:0,answered:false,selected:null,correctCount:0,preguntas:pool};
+  renderEvalQuiz();
+}
+
+function renderEvalQuiz() {
+  const preguntas=quizState.preguntas, q=preguntas[quizState.current], total=preguntas.length;
+  const dots=preguntas.map((_,i)=>`<div class="q-dot${i<quizState.current?' done':i===quizState.current?' current':''}"></div>`).join('');
+  document.getElementById('mainContent').innerHTML=`
+    <div class="quiz-section">
+      <div class="quiz-header" style="background:linear-gradient(90deg,rgba(255,0,84,.15),rgba(72,14,42,.2))">
+        <div class="quiz-header-icon">🎯</div>
+        <div><div class="quiz-header-title">Evaluación Final</div><div class="quiz-header-sub">Mínimo 7/${total} para aprobar</div></div>
+        <div class="quiz-progress-text">${quizState.current+1} / ${total}</div>
+      </div>
+      <div class="quiz-body">
+        <div class="question-num">PREGUNTA ${quizState.current+1} DE ${total}</div>
+        <div class="question-text">${q.q}</div>
+        <div class="options" id="opts">
+          ${q.opts.map((o,i)=>`<div class="option" id="o${i}" onclick="selectOptEval(${i})"><div class="opt-letter">${['A','B','C','D'][i]}</div>${o}</div>`).join('')}
+        </div>
+        <div class="quiz-feedback" id="fb"></div>
+        <div class="quiz-nav">
+          <div class="q-dots">${dots}</div>
+          <button class="btn" style="background:#FF0054;color:#fff" id="nextBtn" onclick="nextEval()" disabled>${quizState.current<total-1?'Siguiente →':'Ver resultados'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function selectOptEval(idx) {
+  if(quizState.answered) return;
+  quizState.answered=true;
+  const q=quizState.preguntas[quizState.current];
+  document.querySelectorAll('.option').forEach((el,i)=>{
+    if(i===q.correct) el.classList.add('correct');
+    else if(i===idx && idx!==q.correct) el.classList.add('wrong');
+  });
+  if(idx===q.correct) quizState.correctCount++;
+  const fb=document.getElementById('fb');
+  fb.className='quiz-feedback show '+(idx===q.correct?'correct-fb':'wrong-fb');
+  fb.innerHTML=idx===q.correct?`✓ Correcto — ${q.explain}`:`✗ Incorrecto — Respuesta correcta: <strong>${['A','B','C','D'][q.correct]}</strong>. ${q.explain}`;
+  document.getElementById('nextBtn').disabled=false;
+}
+
+function nextEval() {
+  const total=quizState.preguntas.length;
+  if(quizState.current<total-1){
+    quizState.current++; quizState.answered=false; renderEvalQuiz();
+  } else {
+    const score=quizState.correctCount, aprobado=score>=7, pct=Math.round((score/total)*100);
+    const color=aprobado?'var(--green)':'var(--red)';
+    document.getElementById('mainContent').innerHTML=`
+      <div class="quiz-section">
+        <div class="quiz-header" style="background:linear-gradient(90deg,rgba(255,0,84,.15),rgba(72,14,42,.2))">
+          <div class="quiz-header-icon">${aprobado?'🏆':'✗'}</div>
+          <div><div class="quiz-header-title">Resultado – Evaluación Final</div><div class="quiz-header-sub">${userName}</div></div>
+          <div class="quiz-progress-text" style="color:${color}">${score}/${total}</div>
+        </div>
+        <div class="score-card">
+          <div class="score-circle"><div class="score-num" style="color:${color}">${score}/${total}</div><div class="score-total">${pct}%</div></div>
+          <div style="font-size:18px;font-weight:700;color:${color};margin-bottom:8px">${aprobado?'¡Evaluación Aprobada!':'No aprobado — Puedes reintentar'}</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:24px">${aprobado?'Felicitaciones, completaste la evaluación final.':'Necesitas 7/'+total+' para aprobar.'}</div>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            ${aprobado?`<button class="btn btn-cert" onclick="downloadConstancia(${score},${total},${pct},true)">📄 Descargar Constancia Final</button>`:''}
+            <button class="btn btn-ghost" onclick="renderEval()">↺ Reintentar</button>
+          </div>
+        </div>
+      </div>`;
+    const fecha=new Date().toLocaleString('es-PE',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    enviarASheets({accion:'registrar',nombre:userName,correo:userEmail,squad:userSquad,focal:userFocal,
+      scoreGlobal:`EVAL:${score}/${total}(${pct}%)`,modulos:'EVAL',xp:'N/A',resultado:aprobado?'EVAL-APROBADO':'EVAL-REPROBADO',detalle:'',fecha});
+  }
 }
 
 // ══ ENVÍO DE DATOS ════════════════════════════════════════════
@@ -902,10 +1231,10 @@ async function enviarASheets(data) {
 
 async function enviarResumenFinal(totalScore,pct,totalXP) {
   const fecha=new Date().toLocaleString('es-PE',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  const detalles=modules.map((m,i)=>`${m.num}:${moduleStates[i].score}/10`).join('|');
+  const detalles=modules.map((m,i)=>`${m.num}:${moduleStates[i].score}/5`).join('|');
   await enviarASheets({
     accion:'registrar', nombre:userName, correo:userEmail, squad:userSquad, focal:userFocal,
-    scoreGlobal:`${totalScore}/40 (${pct}%)`, modulos:'4/4', xp:`${totalXP} XP`,
+    scoreGlobal:`${totalScore}/20 (${pct}%)`, modulos:'4/4', xp:`${totalXP} XP`,
     resultado:pct>=70?'APROBADO':'COMPLETADO', detalle:detalles, fecha
   });
   try {
@@ -914,99 +1243,133 @@ async function enviarResumenFinal(totalScore,pct,totalXP) {
     fd.append('_template','table'); fd.append('_captcha','false');
     fd.append('Nombre completo',userName); fd.append('Correo',userEmail);
     fd.append('Squad',userSquad); fd.append('Focal Point',userFocal);
-    fd.append('Score Global',`${totalScore}/40 (${pct}%)`); fd.append('XP',`${totalXP}`);
+    fd.append('Score Global',`${totalScore}/20 (${pct}%)`); fd.append('XP',`${totalXP}`);
     fd.append('Detalle',detalles); fd.append('Fecha',fecha);
-    fd.append('Resultado',pct>=80?'✓ CONSTANCIA EMITIDA':'⚠ COMPLETADO');
+    fd.append('Resultado',pct>=70?'✓ CONSTANCIA EMITIDA':'⚠ COMPLETADO');
     await fetch(`https://formsubmit.co/${FORMSUBMIT_EMAIL}`,{method:'POST',body:fd});
   } catch(e) { console.warn('FormSubmit:',e); }
 }
 
 // ══ CONSTANCIA ════════════════════════════════════════════════
-function downloadConstancia() {
+function downloadConstancia(evalScore, evalTotal, evalPct, isEval=false) {
   const canvas=document.getElementById('certCanvas'), ctx=canvas.getContext('2d');
   canvas.width=1200; canvas.height=800;
-  const bg=ctx.createLinearGradient(0,0,1200,800);
-  bg.addColorStop(0,'#0b0e17'); bg.addColorStop(1,'#111420');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,1200,800);
-  ctx.strokeStyle='#4f8ef7'; ctx.lineWidth=3; ctx.strokeRect(20,20,1160,760);
-  ctx.strokeStyle='rgba(79,142,247,.3)'; ctx.lineWidth=1; ctx.strokeRect(32,32,1136,736);
-  const bar=ctx.createLinearGradient(0,0,1200,0);
-  bar.addColorStop(0,'#7c3aed'); bar.addColorStop(1,'#4f8ef7');
-  ctx.fillStyle=bar; ctx.fillRect(20,20,1160,6); ctx.fillRect(20,774,1160,6);
-  ctx.fillStyle='#4f8ef7'; ctx.font='bold 13px monospace'; ctx.textAlign='center';
-  ctx.fillText('MINSAIT / INDRA · AI ASSISTED ENGINEERING PROGRAM',600,78);
-  ctx.strokeStyle='rgba(79,142,247,.3)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(80,98); ctx.lineTo(1120,98); ctx.stroke();
-  ctx.fillStyle='#e2e8f0'; ctx.font='bold 48px serif';
-  ctx.fillText('CONSTANCIA DE PARTICIPACIÓN',600,178);
-  ctx.fillStyle='#64748b'; ctx.font='20px sans-serif';
-  ctx.fillText('Se hace constar que',600,238);
-  const ng=ctx.createLinearGradient(300,0,900,0);
-  ng.addColorStop(0,'#4f8ef7'); ng.addColorStop(1,'#22d3a5');
-  ctx.fillStyle=ng; ctx.font='bold 50px serif';
-  ctx.fillText(userName,600,308);
-  ctx.strokeStyle='rgba(79,142,247,.4)'; ctx.lineWidth=1;
-  const nw=ctx.measureText(userName).width;
-  ctx.beginPath(); ctx.moveTo(600-nw/2,322); ctx.lineTo(600+nw/2,322); ctx.stroke();
-  ctx.fillStyle='#94a3b8'; ctx.font='19px sans-serif';
-  ctx.fillText('ha participado y completado la ruta de capacitación',600,375);
-  ctx.fillStyle='#e2e8f0'; ctx.font='bold 24px sans-serif';
-  ctx.fillText('AI Assisted Engineering Learning Path',600,412);
-  ctx.fillStyle='#64748b'; ctx.font='16px sans-serif';
-  ctx.fillText(userSquad,600,445);
-  ctx.font='13px sans-serif'; ctx.fillStyle='#475569';
-  ctx.fillText(`Focal Point: ${userFocal}  ·  ${userEmail}`,600,468);
-  ctx.strokeStyle='rgba(79,142,247,.2)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(80,495); ctx.lineTo(1120,495); ctx.stroke();
+
+  // Fondo blanco corporativo
+  ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,1200,800);
+
+  // Marcos Minsait
+  ctx.fillStyle='#FF0054'; ctx.fillRect(0,0,1200,12);   // top
+  ctx.fillStyle='#FF0054'; ctx.fillRect(0,788,1200,12); // bottom
+  ctx.fillStyle='#FF0054'; ctx.fillRect(0,0,8,800);     // left
+  ctx.fillStyle='#FF0054'; ctx.fillRect(1192,0,8,800);  // right
+
+  // Franja header borgoña
+  ctx.fillStyle='#480E2A'; ctx.fillRect(0,12,1200,60);
+
+  // Header texto
+  ctx.fillStyle='#FFFFFF'; ctx.font='bold 22px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('MINSAIT',30,52);
+  ctx.fillStyle='rgba(255,255,255,.65)'; ctx.font='11px sans-serif';
+  ctx.fillText('An Indra Company',30,68);
+  ctx.fillStyle='rgba(255,255,255,.8)'; ctx.font='bold 10px monospace'; ctx.textAlign='right';
+  ctx.fillText('AI ASSISTED ENGINEERING PROGRAM',1170,48);
+  ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='9px monospace';
+  ctx.fillText('Minsait / Indra · Data Engineering',1170,64);
+
+  // Acento vertical rojo
+  ctx.fillStyle='#FF0054'; ctx.fillRect(38,100,4,90);
+
+  // Título
+  ctx.fillStyle='#480E2A'; ctx.font='bold 13px monospace'; ctx.textAlign='left';
+  ctx.fillText(isEval?'CONSTANCIA DE EVALUACIÓN FINAL':'CONSTANCIA DE PARTICIPACIÓN',50,118);
+  ctx.fillStyle='#480E2A'; ctx.font='bold 44px Georgia, serif';
+  ctx.fillText(isEval?'Evaluación Final':'Participación',50,168);
+
+  // Línea roja
+  ctx.fillStyle='#FF0054'; ctx.fillRect(38,183,780,3);
+
+  // Cuerpo
+  ctx.fillStyle='#555'; ctx.font='16px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('Se hace constar que',50,222);
+  ctx.fillStyle='#480E2A'; ctx.font='bold 38px Georgia, serif';
+  ctx.fillText(userName,50,272);
+  const nw=Math.min(ctx.measureText(userName).width,720);
+  ctx.fillStyle='#FF0054'; ctx.fillRect(50,286,nw,3);
+  ctx.fillStyle='#444'; ctx.font='14px sans-serif';
+  ctx.fillText(isEval?'aprobó satisfactoriamente la Evaluación Final del programa':'participó y completó satisfactoriamente la ruta de capacitación',50,322);
+  ctx.fillStyle='#480E2A'; ctx.font='bold 17px sans-serif';
+  ctx.fillText('AI Assisted Engineering Learning Path',50,350);
+  ctx.fillStyle='#666'; ctx.font='12px sans-serif';
+  ctx.fillText(`${userSquad}  ·  Focal Point: ${userFocal}  ·  ${userEmail}`,50,378);
+
+  // Separador
+  ctx.strokeStyle='#ddd'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(38,402); ctx.lineTo(1162,402); ctx.stroke();
+
+  // Stats
   const totalScore=moduleStates.reduce((a,s)=>a+s.score,0);
-  const pct=Math.round((totalScore/40)*100), totalXP=totalScore*20;
-  const stats=[['4/4','Módulos'],[`${pct}%`,'Score Global'],[`${totalXP} XP`,'XP Total'],[`${totalScore}/40`,'Correctas']];
-  const sx=[200,450,750,1000];
+  const pct=isEval?evalPct:Math.round((totalScore/20)*100);
+  const totalXP=totalScore*40;
+  const stats=isEval
+    ?[['4/4','Módulos'],[`${evalScore}/${evalTotal}`,'Score Evaluación'],[`${pct}%`,'Porcentaje'],[`${totalXP} XP`,'XP Total']]
+    :[['4/4','Módulos'],[`${pct}%`,'Score Global'],[`${totalXP} XP`,'XP Total'],[`${totalScore}/20`,'Correctas']];
+  const sx=[180,440,700,960];
   stats.forEach(([v,l],i)=>{
-    ctx.fillStyle='#4f8ef7'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
-    ctx.fillText(v,sx[i],545);
-    ctx.fillStyle='#64748b'; ctx.font='12px sans-serif';
-    ctx.fillText(l,sx[i],568);
+    ctx.fillStyle='#FF0054'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
+    ctx.fillText(v,sx[i],460);
+    ctx.fillStyle='#888'; ctx.font='11px sans-serif';
+    ctx.fillText(l,sx[i],480);
   });
-  modules.forEach((m,i)=>{
-    const s=moduleStates[i].score, p=Math.round((s/10)*100);
-    ctx.fillStyle=s>=NOTA_MINIMA?'#22d3a5':'#f59e0b';
-    ctx.font='bold 13px monospace';
-    ctx.fillText(`${m.num}: ${s}/10 (${p}%)`,sx[i],612);
-  });
-  ctx.strokeStyle='rgba(79,142,247,.2)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(80,638); ctx.lineTo(1120,638); ctx.stroke();
+  if(!isEval){
+    modules.forEach((m,i)=>{
+      const s=moduleStates[i].score, p=Math.round((s/5)*100);
+      ctx.fillStyle=s>=NOTA_MINIMA?'#22d3a5':'#f59e0b';
+      ctx.font='bold 11px monospace'; ctx.textAlign='center';
+      ctx.fillText(`${m.num}: ${s}/5 (${p}%)`,sx[i],504);
+    });
+  }
+
+  // Separador inferior
+  ctx.strokeStyle='#ddd'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(38,530); ctx.lineTo(1162,530); ctx.stroke();
+
+  // Sello circular
+  ctx.beginPath(); ctx.arc(1090,640,58,0,Math.PI*2);
+  ctx.strokeStyle='#FF0054'; ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(1090,640,50,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,0,84,.25)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle='#FF0054'; ctx.font='bold 26px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('✓',1090,650);
+  ctx.fillStyle='#480E2A'; ctx.font='bold 8px monospace';
+  ctx.fillText('MINSAIT / INDRA',1090,672);
+
+  // Fecha y badge
   const fecha=new Date().toLocaleDateString('es-PE',{year:'numeric',month:'long',day:'numeric'});
-  ctx.fillStyle='#475569'; ctx.font='13px sans-serif'; ctx.textAlign='left';
-  ctx.fillText(`Fecha de emisión: ${fecha}`,80,678);
-  ctx.textAlign='right';
-  ctx.fillText('AI Assisted Engineering · Minsait / Indra',1120,678);
-  ctx.beginPath(); ctx.arc(600,722,30,0,Math.PI*2);
-  ctx.fillStyle='rgba(34,211,165,.1)'; ctx.fill();
-  ctx.strokeStyle='#22d3a5'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle='#22d3a5'; ctx.font='bold 22px sans-serif'; ctx.textAlign='center';
-  ctx.fillText('✓',600,731);
-  ctx.font='bold 10px monospace'; ctx.fillText('COMPLETADO',600,762);
-  const bw=220, bx=(1200-bw)/2;
-  ctx.fillStyle='rgba(245,158,11,.1)'; ctx.strokeStyle='#f59e0b'; ctx.lineWidth=1;
-  const r=14;
-  ctx.beginPath(); ctx.moveTo(bx+r,772); ctx.lineTo(bx+bw-r,772);
-  ctx.arcTo(bx+bw,772,bx+bw,772+r,r); ctx.lineTo(bx+bw,772+24-r);
-  ctx.arcTo(bx+bw,772+24,bx+bw-r,772+24,r); ctx.lineTo(bx+r,772+24);
-  ctx.arcTo(bx,772+24,bx,772+24-r,r); ctx.lineTo(bx,772+r);
-  ctx.arcTo(bx,772,bx+r,772,r); ctx.closePath();
-  ctx.fill(); ctx.stroke();
-  ctx.fillStyle='#f59e0b'; ctx.font='bold 13px sans-serif';
-  ctx.fillText('🏆 AI Engineer Certified',600,789);
+  ctx.fillStyle='#480E2A'; ctx.font='12px sans-serif'; ctx.textAlign='left';
+  ctx.fillText(`Fecha de emisión: ${fecha}`,50,565);
+  // Badge pill
+  const bx=50, bw=320, bh=34, br=17;
+  ctx.fillStyle='rgba(255,0,84,.07)';
+  ctx.beginPath(); ctx.moveTo(bx+br,610); ctx.lineTo(bx+bw-br,610);
+  ctx.arcTo(bx+bw,610,bx+bw,610+br,br); ctx.lineTo(bx+bw,610+bh-br);
+  ctx.arcTo(bx+bw,610+bh,bx+bw-br,610+bh,br); ctx.lineTo(bx+br,610+bh);
+  ctx.arcTo(bx,610+bh,bx,610+bh-br,br); ctx.lineTo(bx,610+br);
+  ctx.arcTo(bx,610,bx+br,610,br); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(255,0,84,.25)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.fillStyle='#FF0054'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(isEval?'🎯 AI Engineer Evaluated':'🏆 AI Engineer Certified',bx+bw/2,632);
+
   const link=document.createElement('a');
-  link.download=`Constancia_AI_Engineering_${userName.replace(/\s+/g,'_')}.png`;
+  const suffix=isEval?'_EvaluacionFinal':'_LearningPath';
+  link.download=`Constancia_Minsait${suffix}_${userName.replace(/\s+/g,'_')}.png`;
   link.href=canvas.toDataURL('image/png'); link.click();
   showNotif('Constancia descargada ✓');
 }
 
 // ══ XP & PROGRESS ═════════════════════════════════════════════
 function updateXP() {
-  const xp=moduleStates.reduce((a,s)=>a+s.score*20,0);
+  const xp=moduleStates.reduce((a,s)=>a+s.score*40,0);
   document.getElementById('xpFill').style.width=(xp/800*100)+'%';
   document.getElementById('xpLabel').textContent=`${xp} / 800 XP`;
 }
