@@ -850,10 +850,10 @@ async function habilitarUsuario() {
 
 async function deshabilitarUsuario(correo) {
   try {
-    const params = new URLSearchParams({ accion: 'deshabilitar', admin: userEmail, correo });
+    const params = new URLSearchParams({ accion: 'deshabilitar', admin: userEmail, correo: correo });
     await fetch(`${SHEETS_URL}?${params.toString()}`, { method:'GET', mode:'no-cors' });
     showNotif(`${correo} deshabilitado ✓`);
-    setTimeout(cargarListaHabilitados, 1500);
+    setTimeout(cargarListaHabilitados, 2000);
   } catch(e) {
     showNotif('Error al deshabilitar');
   }
