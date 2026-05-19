@@ -46,6 +46,8 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 .prog-label{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
 .prog-bar{width:120px;height:4px;background:var(--border);border-radius:4px;overflow:hidden;}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:4px;transition:width .5s ease;}
+.admin-btn{font-size:11px;padding:4px 12px;border-radius:20px;background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);color:#a78bfa;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s;}
+.admin-btn:hover{background:rgba(124,58,237,.25);}
 
 /* LAYOUT */
 .layout{display:flex;flex:1;overflow:hidden;}
@@ -73,6 +75,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 .tab{padding:12px 20px;font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;}
 .tab:hover{color:var(--text);}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab.tab-locked{opacity:.45;cursor:not-allowed;position:relative;}
 .content{flex:1;overflow-y:auto;padding:24px 32px;}
 
 /* MODULE HEADER */
@@ -140,6 +143,8 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 .btn-success{background:var(--green);color:#000;font-weight:700;}
 .btn-success:hover{opacity:.9;transform:translateY(-1px);}
 .btn-cert{background:linear-gradient(135deg,var(--yellow),#f97316);color:#000;font-weight:700;}
+.btn-danger{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--red);font-size:11px;padding:5px 10px;}
+.btn-danger:hover{background:rgba(239,68,68,.25);}
 
 /* SCORE */
 .score-card{text-align:center;padding:40px 24px;}
@@ -177,6 +182,22 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 .concept-modal-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;z-index:10;}
 .concept-modal-close:hover{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
 
+/* ADMIN MODAL */
+.admin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:600;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(6px);}
+.admin-overlay.show{opacity:1;pointer-events:all;}
+.admin-modal{background:var(--card);border:1px solid rgba(124,58,237,.4);border-radius:16px;width:100%;max-width:560px;margin:20px;max-height:80vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7);}
+.admin-modal-header{background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(79,142,247,.15));padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.admin-modal-title{font-size:16px;font-weight:800;color:var(--text);}
+.admin-modal-sub{font-size:11px;color:#a78bfa;margin-top:2px;}
+.admin-modal-body{padding:24px;}
+.admin-section-title{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;}
+.admin-input{width:100%;padding:10px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:'Sora',sans-serif;outline:none;transition:border-color .2s;margin-bottom:8px;}
+.admin-input:focus{border-color:#a78bfa;}
+.admin-input::placeholder{color:var(--muted);}
+.habilitado-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;}
+.habilitado-correo{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--green);}
+.admin-divider{height:1px;background:var(--border);margin:20px 0;}
+
 /* NOTIF */
 .notif{position:fixed;top:60px;right:20px;background:var(--card);border:1px solid var(--green);border-radius:10px;padding:12px 18px;font-size:13px;color:var(--green);display:flex;align-items:center;gap:10px;transform:translateX(200%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.4);}
 .notif.show{transform:translateX(0);}
@@ -184,6 +205,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 ::-webkit-scrollbar{width:6px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+textarea.admin-input{resize:vertical;min-height:80px;}
 </style>
 </head>
 <body>
@@ -198,11 +220,11 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 
     <label class="reg-label">NOMBRES Y APELLIDOS COMPLETOS</label>
     <input class="reg-input" id="f-nombre" type="text" placeholder="Ej: Juan Alberto Pérez García" maxlength="80"/>
-    <div class="reg-error" id="e-nombre">Ingresa tu nombre completo</div>
+    <div class="reg-error" id="e-nombre">Ingresa tu nombre y apellido completos (mínimo dos palabras)</div>
 
     <label class="reg-label">CORREO CORPORATIVO</label>
     <input class="reg-input" id="f-correo" type="email" placeholder="Ej: jperez@indracompany.com" maxlength="80"/>
-    <div class="reg-error" id="e-correo">Ingresa un correo válido</div>
+    <div class="reg-error" id="e-correo">Solo se permite correo @indracompany.com</div>
 
     <label class="reg-label">SQUAD / ÁREA</label>
     <input class="reg-input" id="f-squad" type="text" placeholder="Ej: Data Engineering · Squad Lakehouse" maxlength="60"/>
@@ -229,6 +251,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
   <div class="topbar-tag">Minsait / Indra</div>
   <div class="topbar-user" id="topbarUser"></div>
   <div class="topbar-right">
+    <button class="admin-btn" id="adminBtn" style="display:none" onclick="openAdmin()">⚙ Admin</button>
     <div class="prog-label" id="progressLabel">0 / 4 módulos</div>
     <div class="prog-bar"><div class="prog-fill" id="globalBar" style="width:0%"></div></div>
   </div>
@@ -268,7 +291,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
   <div class="main">
     <div class="tabs">
       <div class="tab active" id="tab-video" onclick="switchTab('video',this)">▶ Video</div>
-      <div class="tab" id="tab-quiz" onclick="switchTab('quiz',this)">⚡ Quiz</div>
+      <div class="tab tab-locked" id="tab-quiz" title="Quiz no habilitado aún">🔒 Quiz</div>
       <div class="tab" id="tab-notes" onclick="switchTab('notes',this)">📋 Conceptos</div>
     </div>
     <div class="content" id="mainContent"></div>
@@ -289,6 +312,69 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
         <div class="concept-modal-label">¿Cómo aplica en tu trabajo?</div>
         <div class="concept-modal-practical" id="cPractical"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN MODAL -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-modal">
+    <div class="admin-modal-header">
+      <div style="font-size:24px">⚙</div>
+      <div>
+        <div class="admin-modal-title">Panel de Administración</div>
+        <div class="admin-modal-sub" id="adminSubtitle"></div>
+      </div>
+      <button class="concept-modal-close" style="position:relative;top:auto;right:auto;margin-left:auto" onclick="closeAdmin()">✕</button>
+    </div>
+    <div class="admin-modal-body">
+
+      <!-- Habilitar quiz -->
+      <div class="admin-section-title">🔓 Habilitar Quiz por correo</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input class="admin-input" id="admin-correo-input" placeholder="correo@indracompany.com" style="margin-bottom:0;flex:1"/>
+        <button class="btn btn-primary" style="white-space:nowrap" onclick="habilitarUsuario()">+ Habilitar</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:16px">También puedes pegar varios correos separados por coma o salto de línea</div>
+
+      <div class="admin-section-title">👥 Usuarios habilitados</div>
+      <div id="lista-habilitados" style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--muted);font-style:italic">Cargando...</div>
+      </div>
+
+      <div class="admin-divider"></div>
+
+      <!-- Editar preguntas -->
+      <div class="admin-section-title">✏️ Editar preguntas del Quiz</div>
+      <div style="margin-bottom:12px">
+        <select class="admin-input" id="admin-mod-select" onchange="cargarPreguntasAdmin()" style="margin-bottom:8px">
+          <option value="0">Módulo 01 – Engineering Harness</option>
+          <option value="1">Módulo 02 – Buenas Prácticas</option>
+          <option value="2">Módulo 03 – Subagents & Context</option>
+          <option value="3">Módulo 04 – End-to-End</option>
+        </select>
+        <select class="admin-input" id="admin-preg-select" onchange="cargarPreguntaAdmin()" style="margin-bottom:8px"></select>
+      </div>
+      <div id="admin-preg-form" style="display:none">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Pregunta</div>
+        <textarea class="admin-input" id="admin-preg-texto" rows="3"></textarea>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Opciones (A, B, C, D)</div>
+        <input class="admin-input" id="admin-opt-0" placeholder="Opción A"/>
+        <input class="admin-input" id="admin-opt-1" placeholder="Opción B"/>
+        <input class="admin-input" id="admin-opt-2" placeholder="Opción C"/>
+        <input class="admin-input" id="admin-opt-3" placeholder="Opción D"/>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Respuesta correcta</div>
+        <select class="admin-input" id="admin-correct">
+          <option value="0">A</option>
+          <option value="1">B</option>
+          <option value="2">C</option>
+          <option value="3">D</option>
+        </select>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Explicación</div>
+        <textarea class="admin-input" id="admin-explain" rows="3"></textarea>
+        <button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="guardarPregunta()">💾 Guardar pregunta</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -396,17 +482,31 @@ const modules = [
   }
 ];
 
-
 // ══ STATE ═════════════════════════════════════════════════════
 let userName='', userEmail='', userSquad='', userFocal='';
 let currentModule=0, currentTab='video';
 let moduleStates = modules.map(()=>({completed:false,quizDone:false,score:0}));
 let quizState = {current:0,answered:false,selected:null,correctCount:0};
+let quizHabilitado = false;
+let esAdmin = false;
 const NOTA_MINIMA = 7;
+const ADMINS = ['drimas@indracompany.com','ejescusa@indracompany.com'];
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycby3hJL8WUmGWom8gwUSv0dWvVIyhBjCn5aqdY3Vvc7SW7nXiug7_R8ZCnhOqLOa4y8/exec';
 const FORMSUBMIT_EMAIL = 'ejescusa@indracompany.com';
 
-// ══ REGISTRO ══════════════════════════════════════════════════
+// ══ VALIDACIONES ══════════════════════════════════════════════
+function esNombreValido(nombre) {
+  const limpio = nombre.trim();
+  // Mínimo 2 palabras con letras reales (no solo puntos/símbolos)
+  const palabras = limpio.split(/\s+/).filter(p => /[a-záéíóúüñA-ZÁÉÍÓÚÜÑ]{2,}/.test(p));
+  return palabras.length >= 2;
+}
+
+function esCorreoValido(correo) {
+  const limpio = correo.trim().toLowerCase();
+  return limpio.endsWith('@indracompany.com') && limpio.length > '@indracompany.com'.length;
+}
+
 function validate(id, errId, condition) {
   const el = document.getElementById(id);
   const er = document.getElementById(errId);
@@ -414,42 +514,73 @@ function validate(id, errId, condition) {
   el.classList.remove('error'); er.classList.remove('show'); return true;
 }
 
-function startLearning() {
+// ══ REGISTRO ══════════════════════════════════════════════════
+async function startLearning() {
   const nombre = document.getElementById('f-nombre').value.trim();
   const correo = document.getElementById('f-correo').value.trim();
   const squad  = document.getElementById('f-squad').value.trim();
   const focal  = document.getElementById('f-focal').value.trim();
 
   const ok = [
-    validate('f-nombre','e-nombre', nombre.length >= 3),
-    validate('f-correo','e-correo', correo.includes('@') && correo.includes('.')),
+    validate('f-nombre','e-nombre', esNombreValido(nombre)),
+    validate('f-correo','e-correo', esCorreoValido(correo)),
     validate('f-squad', 'e-squad',  squad.length >= 2),
     validate('f-focal', 'e-focal',  focal.length >= 2),
   ].every(Boolean);
 
   if (!ok) return;
 
-  userName=nombre; userEmail=correo; userSquad=squad; userFocal=focal;
+  userName=nombre; userEmail=correo.toLowerCase(); userSquad=squad; userFocal=focal;
+
+  // Verificar si es admin o tiene quiz habilitado
+  esAdmin = ADMINS.includes(userEmail);
+  await verificarHabilitacion();
+
   document.getElementById('regScreen').classList.add('hidden');
   document.getElementById('topbarUser').innerHTML = `👤 <span>${userName}</span>`;
+  if (esAdmin) document.getElementById('adminBtn').style.display = 'flex';
+
+  actualizarTabQuiz();
   updateNav(); renderContent();
-  
-// Registrar ingreso en Google Sheets
+
   const fechaIngreso = new Date().toLocaleString('es-PE', {
     year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
   });
   enviarASheets({
-    nombre: userName,
-    correo: userEmail,
-    squad:  userSquad,
-    focal:  userFocal,
-    scoreGlobal: 'En progreso',
-    modulos: '0/4',
-    xp: '0 XP',
-    resultado: 'INGRESÓ',
-    detalle: '',
-    fecha: fechaIngreso
+    accion: 'registrar',
+    nombre: userName, correo: userEmail, squad: userSquad, focal: userFocal,
+    scoreGlobal: 'En progreso', modulos: '0/4', xp: '0 XP',
+    resultado: 'INGRESÓ', detalle: '', fecha: fechaIngreso
   });
+}
+
+async function verificarHabilitacion() {
+  if (esAdmin) { quizHabilitado = true; return; }
+  try {
+    const params = new URLSearchParams({ accion: 'verificar', correo: userEmail });
+    const resp = await fetch(`${SHEETS_URL}?${params.toString()}`, { method:'GET', mode:'cors' });
+    const data = await resp.json();
+    quizHabilitado = data.habilitado || false;
+  } catch(e) {
+    quizHabilitado = false;
+  }
+}
+
+function actualizarTabQuiz() {
+  const tabQuiz = document.getElementById('tab-quiz');
+  if (quizHabilitado) {
+    tabQuiz.className = 'tab';
+    tabQuiz.title = '';
+    tabQuiz.innerHTML = '⚡ Quiz';
+    tabQuiz.onclick = function() { switchTab('quiz', this); };
+  } else {
+    tabQuiz.className = 'tab tab-locked';
+    tabQuiz.title = 'Quiz no habilitado. Contacta a tu Focal Point.';
+    tabQuiz.innerHTML = '🔒 Quiz';
+    tabQuiz.onclick = function() {
+      showNotif('Quiz no habilitado. Contacta a tu Focal Point.');
+    };
+  }
 }
 
 // Enter entre campos
@@ -461,7 +592,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('regBtn').addEventListener('click', startLearning);
   document.getElementById('conceptClose').addEventListener('click',()=>document.getElementById('conceptOverlay').classList.remove('show'));
   document.getElementById('conceptOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('conceptOverlay')) document.getElementById('conceptOverlay').classList.remove('show'); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.getElementById('conceptOverlay').classList.remove('show'); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') { document.getElementById('conceptOverlay').classList.remove('show'); closeAdmin(); } });
 });
 
 // ══ NAV ═══════════════════════════════════════════════════════
@@ -480,6 +611,7 @@ function updateNav() {
   });
 }
 function switchTab(tab,el) {
+  if (!quizHabilitado && tab==='quiz') { showNotif('Quiz no habilitado. Contacta a tu Focal Point.'); return; }
   currentTab=tab;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active'); renderContent();
@@ -510,7 +642,7 @@ function renderContent() {
         </div>
       </div>
       <div style="display:flex;gap:12px;align-items:center;margin-top:4px">
-        <button class="btn btn-primary" onclick="goToQuiz()">⚡ Ir al Quiz</button>
+        ${quizHabilitado ? `<button class="btn btn-primary" onclick="goToQuiz()">⚡ Ir al Quiz</button>` : `<button class="btn btn-ghost" style="cursor:not-allowed;opacity:.5" title="Quiz no habilitado">🔒 Quiz no habilitado</button>`}
         ${moduleStates[currentModule].completed?'<span style="color:var(--green);font-size:13px">✓ Módulo completado</span>':''}
       </div>`;
   } else if (currentTab==='notes') {
@@ -522,13 +654,15 @@ function renderContent() {
       <div class="concepts-grid">
         ${m.concepts.map((con,i)=>`<div class="concept-chip" onclick="openConcept(${currentModule},${i})"><span>${con.icon}</span>${con.text}<span class="chip-arrow">▶</span></div>`).join('')}
       </div>
-      <button class="btn btn-primary" onclick="goToQuiz()">⚡ Ir al Quiz</button>`;
+      ${quizHabilitado ? `<button class="btn btn-primary" onclick="goToQuiz()">⚡ Ir al Quiz</button>` : `<button class="btn btn-ghost" style="cursor:not-allowed;opacity:.5">🔒 Quiz no habilitado</button>`}`;
   } else {
+    if (!quizHabilitado) { currentTab='video'; switchTabVisual('video'); renderContent(); return; }
     if (moduleStates[currentModule].quizDone) renderScoreCard(); else renderQuiz();
   }
 }
 
 function goToQuiz() {
+  if (!quizHabilitado) { showNotif('Quiz no habilitado. Contacta a tu Focal Point.'); return; }
   currentTab='quiz'; switchTabVisual('quiz');
   quizState={current:0,answered:false,selected:null,correctCount:0};
   renderContent();
@@ -665,31 +799,115 @@ function showCompletion() {
     </div>`;
 }
 
+// ══ ADMIN PANEL ═══════════════════════════════════════════════
+function openAdmin() {
+  document.getElementById('adminSubtitle').textContent = userEmail;
+  document.getElementById('adminOverlay').classList.add('show');
+  cargarListaHabilitados();
+  cargarPreguntasAdmin();
+}
+function closeAdmin() {
+  document.getElementById('adminOverlay').classList.remove('show');
+}
+
+async function cargarListaHabilitados() {
+  const lista = document.getElementById('lista-habilitados');
+  lista.innerHTML = '<div style="font-size:12px;color:var(--muted);font-style:italic">Cargando...</div>';
+  try {
+    const params = new URLSearchParams({ accion: 'listar_habilitados', admin: userEmail });
+    const resp = await fetch(`${SHEETS_URL}?${params.toString()}`, { method:'GET', mode:'cors' });
+    const data = await resp.json();
+    if (!data.ok || !data.lista || data.lista.length === 0) {
+      lista.innerHTML = '<div style="font-size:12px;color:var(--muted);font-style:italic">Sin usuarios habilitados aún</div>';
+      return;
+    }
+    lista.innerHTML = data.lista.map(u => `
+      <div class="habilitado-item">
+        <span class="habilitado-correo">${u.correo}</span>
+        <button class="btn btn-danger" onclick="deshabilitarUsuario('${u.correo}')">✕ Quitar</button>
+      </div>`).join('');
+  } catch(e) {
+    lista.innerHTML = '<div style="font-size:12px;color:var(--red)">Error al cargar lista</div>';
+  }
+}
+
+async function habilitarUsuario() {
+  const input = document.getElementById('admin-correo-input').value.trim();
+  if (!input) return;
+  const correos = input.split(/[\n,]+/).map(c=>c.trim().toLowerCase()).filter(c=>c.includes('@'));
+  if (correos.length === 0) { showNotif('Ingresa al menos un correo válido'); return; }
+
+  try {
+    const params = new URLSearchParams({ accion: 'habilitar', admin: userEmail, correos: JSON.stringify(correos) });
+    await fetch(`${SHEETS_URL}?${params.toString()}`, { method:'GET', mode:'no-cors' });
+    document.getElementById('admin-correo-input').value = '';
+    showNotif(`${correos.length} correo(s) habilitado(s) ✓`);
+    setTimeout(cargarListaHabilitados, 1500);
+  } catch(e) {
+    showNotif('Error al habilitar');
+  }
+}
+
+async function deshabilitarUsuario(correo) {
+  try {
+    const params = new URLSearchParams({ accion: 'deshabilitar', admin: userEmail, correo });
+    await fetch(`${SHEETS_URL}?${params.toString()}`, { method:'GET', mode:'no-cors' });
+    showNotif(`${correo} deshabilitado ✓`);
+    setTimeout(cargarListaHabilitados, 1500);
+  } catch(e) {
+    showNotif('Error al deshabilitar');
+  }
+}
+
+// ══ EDITAR PREGUNTAS ══════════════════════════════════════════
+function cargarPreguntasAdmin() {
+  const modIdx = parseInt(document.getElementById('admin-mod-select').value);
+  const select = document.getElementById('admin-preg-select');
+  select.innerHTML = modules[modIdx].quiz.map((q,i) =>
+    `<option value="${i}">P${i+1}: ${q.q.substring(0,50)}...</option>`
+  ).join('');
+  cargarPreguntaAdmin();
+}
+
+function cargarPreguntaAdmin() {
+  const modIdx = parseInt(document.getElementById('admin-mod-select').value);
+  const pregIdx = parseInt(document.getElementById('admin-preg-select').value);
+  const q = modules[modIdx].quiz[pregIdx];
+  document.getElementById('admin-preg-form').style.display = 'block';
+  document.getElementById('admin-preg-texto').value = q.q;
+  q.opts.forEach((opt,i) => document.getElementById(`admin-opt-${i}`).value = opt);
+  document.getElementById('admin-correct').value = q.correct;
+  document.getElementById('admin-explain').value = q.explain;
+}
+
+function guardarPregunta() {
+  const modIdx = parseInt(document.getElementById('admin-mod-select').value);
+  const pregIdx = parseInt(document.getElementById('admin-preg-select').value);
+  modules[modIdx].quiz[pregIdx].q = document.getElementById('admin-preg-texto').value.trim();
+  modules[modIdx].quiz[pregIdx].opts = [0,1,2,3].map(i => document.getElementById(`admin-opt-${i}`).value.trim());
+  modules[modIdx].quiz[pregIdx].correct = parseInt(document.getElementById('admin-correct').value);
+  modules[modIdx].quiz[pregIdx].explain = document.getElementById('admin-explain').value.trim();
+  // Actualizar selector
+  cargarPreguntasAdmin();
+  showNotif('Pregunta actualizada ✓');
+}
+
+// ══ ENVÍO DE DATOS ════════════════════════════════════════════
 async function enviarASheets(data) {
   try {
-    const params = new URLSearchParams({
-      nombre:      data.nombre      || '',
-      correo:      data.correo      || '',
-      squad:       data.squad       || '',
-      focal:       data.focal       || '',
-      scoreGlobal: data.scoreGlobal || '',
-      modulos:     data.modulos     || '',
-      xp:          data.xp         || '',
-      resultado:   data.resultado   || '',
-      detalle:     data.detalle     || '',
-      fecha:       data.fecha       || ''
-    });
-    await fetch(`${SHEETS_URL}?${params.toString()}`, {
-      method: 'GET',
-      mode: 'no-cors'
-    });
+    const params = new URLSearchParams(data);
+    await fetch(`${SHEETS_URL}?${params.toString()}`, { method:'GET', mode:'no-cors' });
   } catch(e) { console.warn('Sheets:', e); }
 }
 
 async function enviarResumenFinal(totalScore,pct,totalXP) {
   const fecha=new Date().toLocaleString('es-PE',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
-  const detalles=modules.map((m,i)=>`${m.num}: ${moduleStates[i].score}/10`).join(' | ');
-  await enviarASheets({nombre:userName,correo:userEmail,squad:userSquad,focal:userFocal,scoreGlobal:`${totalScore}/40 (${pct}%)`,modulos:'4/4',xp:`${totalXP} XP`,resultado:pct>=70?'APROBADO':'COMPLETADO',detalle:detalles,fecha});
+  const detalles=modules.map((m,i)=>`${m.num}:${moduleStates[i].score}/10`).join('|');
+  await enviarASheets({
+    accion:'registrar', nombre:userName, correo:userEmail, squad:userSquad, focal:userFocal,
+    scoreGlobal:`${totalScore}/40 (${pct}%)`, modulos:'4/4', xp:`${totalXP} XP`,
+    resultado:pct>=70?'APROBADO':'COMPLETADO', detalle:detalles, fecha
+  });
   try {
     const fd=new FormData();
     fd.append('_subject',`[AI Learning] 🏆 ${userName} (${userEmail}) completó la ruta - ${pct}%`);
@@ -742,7 +960,7 @@ function downloadConstancia() {
   ctx.beginPath(); ctx.moveTo(80,495); ctx.lineTo(1120,495); ctx.stroke();
   const totalScore=moduleStates.reduce((a,s)=>a+s.score,0);
   const pct=Math.round((totalScore/40)*100), totalXP=totalScore*20;
-  const stats=[['4/4','Módulos'],[ `${pct}%`,'Score Global'],[`${totalXP} XP`,'XP Total'],[`${totalScore}/40`,'Correctas']];
+  const stats=[['4/4','Módulos'],[`${pct}%`,'Score Global'],[`${totalXP} XP`,'XP Total'],[`${totalScore}/40`,'Correctas']];
   const sx=[200,450,750,1000];
   stats.forEach(([v,l],i)=>{
     ctx.fillStyle='#4f8ef7'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
@@ -805,7 +1023,6 @@ function showNotif(msg) {
 
 // ══ CONCEPTS MODAL ════════════════════════════════════════════
 const conceptDefs = [
-  // Módulo 01
   [
     { tag:"Engineering Harness", def:"Un Engineering Harness es la capa de software que envuelve al AI model y lo conecta con el entorno real del desarrollador: el filesystem, la terminal, APIs externas y el contexto del proyecto. Sin el harness, el modelo solo genera texto. Con él, actúa como un agente que puede leer, escribir y ejecutar.", practical:"Cuando usas Claude Code o GitHub Copilot en tu IDE, estás interactuando con el harness, no directamente con el modelo. El harness es lo que decide qué contexto enviarle al AI y qué hacer con su respuesta." },
     { tag:"Agent Harness", def:"Un Agent Harness es un tipo específico de Engineering Harness diseñado para que el AI opere de forma autónoma en loops: planifica → actúa → observa el resultado → planifica de nuevo. Es la base de los AI agents modernos.", practical:"Claude Code opera como agent harness: puede ejecutar comandos, ver el output, corregir errores y repetir el proceso sin que el developer intervenga en cada paso." },
@@ -815,7 +1032,6 @@ const conceptDefs = [
     { tag:"Prompting", def:"Prompting es el arte de comunicarle al modelo qué querés lograr, con qué restricciones y en qué formato. Un buen prompt incluye: objetivo claro, contexto relevante, restricciones explícitas y formato del output esperado.", practical:"La diferencia entre un developer que produce resultados medios y uno que produce resultados excelentes con AI está mayoritariamente en la calidad de sus prompts. Es una habilidad técnica que se entrena." },
     { tag:"Context Engineering", def:"Context Engineering es la disciplina de construir, filtrar y estructurar deliberadamente el contexto que recibe el AI model. Va más allá del prompting: decide qué información incluir, en qué orden, con qué nivel de detalle y cuándo limpiar.", practical:"Antes de iniciar una sesión de AI-assisted coding, construí el contexto: ¿qué archivos son relevantes? ¿Cuál es el objetivo? ¿Qué restricciones no negociables existen? Eso es context engineering." },
   ],
-  // Módulo 02
   [
     { tag:"Context Delivery", def:"Context Delivery es la práctica de entregar al AI exactamente el contexto que necesita para responder con precisión: no menos (que no entienda) ni más (que se confunda con ruido). Es la primera acción de cada sesión efectiva.", practical:"Antes de pedirle algo a Claude Code, entregá: el objetivo de la tarea, el stack tecnológico, las restricciones del negocio y el estado actual del código. Ese es el contexto mínimo viable." },
     { tag:"Problem Splitting", def:"Problem Splitting es la técnica de dividir un problema complejo en subtareas atómicas, cada una con un objetivo claro, inputs definidos y un output verificable. Cada subtarea se resuelve con el AI de forma independiente.", practical:"En lugar de 'refactorizá este módulo de 2000 líneas', dividí en: 1) extraer las funciones puras, 2) identificar dependencias, 3) refactorizar función por función. El AI es mucho más preciso con tareas pequeñas." },
@@ -825,7 +1041,6 @@ const conceptDefs = [
     { tag:"Iteration Loop", def:"El Iteration Loop es el ciclo central del trabajo con AI: definís la tarea → el AI genera un output → evaluás con criterio técnico → ajustás el prompt o el contexto → volvés a generar. No es lineal, es iterativo.", practical:"El primer output del AI rara vez es el final. Tratalo como un borrador: evaluá, señalá exactamente qué está mal y por qué, y pedí una nueva versión con esa información." },
     { tag:"Prompt Clarity", def:"Prompt Clarity es la cualidad de un prompt que no deja espacio a interpretaciones ambiguas. Un prompt claro especifica: qué querés, cómo lo querés, qué no querés, y cómo sabés que está bien.", practical:"Malo: 'mejorá esta función'. Bueno: 'refactorizá esta función para reducir su complejidad ciclomática manteniendo el comportamiento actual; no uses librerías externas; el output debe pasar los tests existentes'." },
   ],
-  // Módulo 03
   [
     { tag:"Subagents", def:"Los Subagents son instancias del AI model lanzadas para resolver subtareas específicas, cada una con su propio contexto aislado y un objetivo concreto. Son coordinados por un agente orquestador principal.", practical:"En un pipeline de datos, podrías tener un subagent para generar el schema, otro para escribir las transformaciones y otro para crear los tests, todos corriendo en paralelo con contextos separados." },
     { tag:"Parallel Execution", def:"Parallel Execution es la ejecución simultánea de múltiples subagents en tareas independientes. Elimina el cuello de botella de la ejecución secuencial cuando las tareas no tienen dependencias entre sí.", practical:"Si tenés que documentar 4 módulos independientes, en lugar de hacerlo uno por uno, lanzás 4 subagents en paralelo. El tiempo total pasa de 4x a ~1x más overhead de coordinación." },
@@ -835,7 +1050,6 @@ const conceptDefs = [
     { tag:"Task Decomposition", def:"Task Decomposition es el proceso de analizar un objetivo complejo, identificar sus componentes, mapear las dependencias entre ellos y definir el orden de ejecución óptimo para asignarlos a subagents.", practical:"Antes de lanzar subagents, dibujá el grafo de dependencias: ¿qué tareas pueden correr en paralelo? ¿Cuáles necesitan el output de otra? Ese mapa es el plan de ejecución de tu arquitectura multi-agent." },
     { tag:"Agent Orchestration", def:"Agent Orchestration es la disciplina de diseñar y gestionar la coordinación entre múltiples agentes o subagents: definir roles, establecer protocolos de comunicación y manejar fallos y resultados parciales.", practical:"El developer actúa como orquestador humano cuando coordina múltiples sesiones de Claude Code en paralelo. En el futuro, este rol será delegado a un agente orquestador automatizado." },
   ],
-  // Módulo 04
   [
     { tag:"Project Kickoff", def:"El Project Kickoff con AI es la fase inicial donde se define el objetivo del proyecto, se establece el stack tecnológico, se identifican las restricciones y se diseña la primera descomposición de tareas para trabajar con el AI.", practical:"Antes de escribir una sola línea de código, pasá 15 minutos construyendo el contexto inicial: objetivo del proyecto, stack, restricciones, criterios de éxito. Eso es el kickoff que el AI necesita." },
     { tag:"Task Definition", def:"Task Definition es el proceso de convertir un objetivo de negocio en tareas concretas con inputs definidos, outputs esperados y criterios de aceptación claros. Sin task definition precisa, el AI genera outputs impredecibles.", practical:"No: 'creá un pipeline de datos'. Sí: 'creá un pipeline que ingiera datos del bucket S3 en formato Parquet, aplique las transformaciones del schema adjunto y los escriba en la tabla Delta Lake especificada'." },
@@ -846,7 +1060,6 @@ const conceptDefs = [
     { tag:"AI Documentation", def:"AI Documentation es el uso del AI para generar borradores de documentación técnica basados en el código real. El AI genera la estructura y las descripciones técnicas; el developer agrega el contexto de negocio y las decisiones de diseño.", practical:"Después de completar un módulo, pedile al AI: 'Generá la documentación técnica de este código. Luego te voy a agregar las decisiones de diseño y el contexto de negocio que vos no podés inferir del código'." },
   ]
 ];
-
 
 function openConcept(modIdx,conIdx) {
   const con=modules[modIdx].concepts[conIdx], def=conceptDefs[modIdx][conIdx];
