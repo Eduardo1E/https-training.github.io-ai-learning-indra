@@ -79,6 +79,15 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 .nav-item.active{background:rgba(79,142,247,.1);border-left-color:var(--accent);}
 .nav-item.completed .nav-icon{background:rgba(34,211,165,.15);color:var(--green);}
 .nav-item.locked{opacity:.4;cursor:not-allowed;}
+
+/* PROGRESO POR MÓDULO */
+.nav-progress-wrap{margin-top:5px;}
+.nav-progress-bar{height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:3px;}
+.nav-progress-fill{height:100%;border-radius:3px;transition:width .5s ease;}
+.nav-progress-status{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:4px;}
+.nav-progress-status.done{color:var(--green);}
+.nav-progress-status.active{color:var(--accent);}
+.nav-progress-status.locked{color:var(--muted);opacity:.6;}
 .nav-icon{width:28px;height:28px;border-radius:6px;background:rgba(79,142,247,.12);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-weight:700;}
 .nav-label{flex:1;}
 .nav-label-title{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;}
@@ -493,24 +502,44 @@ textarea.admin-input{resize:vertical;min-height:80px;}
   <div class="sidebar">
     <div class="sidebar-section-title">Módulos</div>
     <div class="nav-item active" id="nav-0" onclick="loadModule(0)">
-      <div class="nav-icon">01</div>
-      <div class="nav-label"><div class="nav-label-title">Engineering Harness</div><div class="nav-label-sub">Fundamentos</div></div>
-      <div class="nav-check" id="check-0">✓</div>
+      <div class="nav-icon" id="nav-icon-0">01</div>
+      <div class="nav-label">
+        <div class="nav-label-title">Engineering Harness</div>
+        <div class="nav-progress-wrap" id="nav-prog-0">
+          <div class="nav-progress-bar"><div class="nav-progress-fill" id="nav-bar-0" style="width:0%"></div></div>
+          <div class="nav-progress-status locked" id="nav-status-0">🔒 Pendiente</div>
+        </div>
+      </div>
     </div>
     <div class="nav-item locked" id="nav-1" onclick="loadModule(1)">
-      <div class="nav-icon">02</div>
-      <div class="nav-label"><div class="nav-label-title">Buenas Prácticas</div><div class="nav-label-sub">Meta Staff Engineer</div></div>
-      <div class="nav-check" id="check-1">✓</div>
+      <div class="nav-icon" id="nav-icon-1">02</div>
+      <div class="nav-label">
+        <div class="nav-label-title">Buenas Prácticas</div>
+        <div class="nav-progress-wrap" id="nav-prog-1">
+          <div class="nav-progress-bar"><div class="nav-progress-fill" id="nav-bar-1" style="width:0%"></div></div>
+          <div class="nav-progress-status locked" id="nav-status-1">🔒 Pendiente</div>
+        </div>
+      </div>
     </div>
     <div class="nav-item locked" id="nav-2" onclick="loadModule(2)">
-      <div class="nav-icon">03</div>
-      <div class="nav-label"><div class="nav-label-title">Subagents & Context</div><div class="nav-label-sub">Parallel Execution</div></div>
-      <div class="nav-check" id="check-2">✓</div>
+      <div class="nav-icon" id="nav-icon-2">03</div>
+      <div class="nav-label">
+        <div class="nav-label-title">Subagents & Context</div>
+        <div class="nav-progress-wrap" id="nav-prog-2">
+          <div class="nav-progress-bar"><div class="nav-progress-fill" id="nav-bar-2" style="width:0%"></div></div>
+          <div class="nav-progress-status locked" id="nav-status-2">🔒 Pendiente</div>
+        </div>
+      </div>
     </div>
     <div class="nav-item locked" id="nav-3" onclick="loadModule(3)">
-      <div class="nav-icon">04</div>
-      <div class="nav-label"><div class="nav-label-title">Proyecto End-to-End</div><div class="nav-label-sub">Build from scratch</div></div>
-      <div class="nav-check" id="check-3">✓</div>
+      <div class="nav-icon" id="nav-icon-3">04</div>
+      <div class="nav-label">
+        <div class="nav-label-title">Proyecto End-to-End</div>
+        <div class="nav-progress-wrap" id="nav-prog-3">
+          <div class="nav-progress-bar"><div class="nav-progress-fill" id="nav-bar-3" style="width:0%"></div></div>
+          <div class="nav-progress-status locked" id="nav-status-3">🔒 Pendiente</div>
+        </div>
+      </div>
     </div>
     <div class="nav-item eval-locked" id="nav-eval" onclick="loadEval()">
       <div class="nav-icon">🔒</div>
@@ -1032,13 +1061,57 @@ function loadEval() {
 }
 function updateNav() {
   modules.forEach((_,i)=>{
-    const el=document.getElementById('nav-'+i), ck=document.getElementById('check-'+i);
+    const el      = document.getElementById('nav-'+i);
+    const icon    = document.getElementById('nav-icon-'+i);
+    const bar     = document.getElementById('nav-bar-'+i);
+    const status  = document.getElementById('nav-status-'+i);
+    if (!el) return;
+
+    const st = moduleStates[i];
+    const bloqueado = !esAdmin && i>0 && !moduleStates[i-1].completed;
+
     el.classList.remove('active','completed','locked');
-    if (!esAdmin && i>0 && !moduleStates[i-1].completed) el.classList.add('locked');
-    if (moduleStates[i].completed) el.classList.add('completed');
-    if (i===currentModule && currentView==='module') el.classList.add('active');
-    ck.style.display = moduleStates[i].completed ? 'flex':'none';
+
+    // ── Calcular progreso del módulo (0-100%) ──
+    let pct = 0, color = 'var(--border)', statusClass = 'locked', statusText = '🔒 Pendiente';
+
+    if (bloqueado) {
+      pct = 0; color = 'var(--border)';
+      statusClass = 'locked'; statusText = '🔒 Bloqueado';
+      el.classList.add('locked');
+    } else if (st.completed) {
+      pct = 100; color = 'var(--green)';
+      statusClass = 'done';
+      statusText = `✓ ${st.score}/5 · Completado`;
+      el.classList.add('completed');
+      if (icon) { icon.style.background='rgba(34,211,165,.15)'; icon.style.color='var(--green)'; }
+    } else if (st.quizDone && !st.completed) {
+      // Reprobó el Refuerza
+      pct = 75; color = 'var(--red)';
+      statusClass = 'active'; statusText = `✗ ${st.score}/5 · Reintentar`;
+    } else if (st.videoVisto || st.refuerzaHabilitado) {
+      // Video visto, Refuerza pendiente
+      pct = 50; color = 'var(--accent)';
+      statusClass = 'active'; statusText = '⚡ Refuerza pendiente';
+    } else {
+      // Disponible, sin empezar
+      pct = 10; color = 'rgba(79,142,247,.4)';
+      statusClass = 'active'; statusText = '▶ Ver video';
+    }
+
+    if (i === currentModule && currentView==='module') el.classList.add('active');
+
+    // Aplicar barra y estado
+    if (bar) { bar.style.width = pct+'%'; bar.style.background = color; }
+    if (status) {
+      status.className = `nav-progress-status ${statusClass}`;
+      status.textContent = statusText;
+    }
+    if (icon && !st.completed) {
+      icon.style.background = ''; icon.style.color = '';
+    }
   });
+
   if (currentView==='eval') document.getElementById('nav-eval').classList.add('active');
 }
 function switchTab(tab,el) {
