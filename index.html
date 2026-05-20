@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AI Assisted Engineering – Learning Path | Minsait / Indra</title>
 <script src="https://www.youtube.com/iframe_api"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap');
 :root {
@@ -1520,8 +1519,21 @@ async function enviarResumenFinal(totalScore,pct,totalXP) {
   } catch(e) { console.warn('FormSubmit:',e); }
 }
 
-// ══ CONSTANCIA PDF (funciona en todos los browsers + iOS) ═════
+// ══ CONSTANCIA PDF — carga jsPDF solo cuando se necesita ══════
 function downloadConstancia(evalScore, evalTotal, evalPct, isEval=false) {
+  showNotif('Generando PDF...');
+  if (window.jspdf) {
+    _generarPDF(evalScore, evalTotal, evalPct, isEval);
+    return;
+  }
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  s.onload = () => _generarPDF(evalScore, evalTotal, evalPct, isEval);
+  s.onerror = () => showNotif('Error al cargar el generador de PDF');
+  document.head.appendChild(s);
+}
+
+function _generarPDF(evalScore, evalTotal, evalPct, isEval=false) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
   // A4 landscape: 297 x 210 mm
