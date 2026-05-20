@@ -665,10 +665,22 @@ window.addEventListener('DOMContentLoaded', () => {
 
 function entrar() {
   const nombre = document.getElementById('f-nombre').value.trim();
-  if (nombre.length < 2) {
-    document.getElementById('f-nombre').style.borderColor = 'var(--red)';
+  const input = document.getElementById('f-nombre');
+
+  // Solo letras (incluyendo tildes y ñ), espacios — mínimo 2 palabras
+  const soloLetras = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]+$/.test(nombre);
+  const dospalabras = nombre.trim().split(/\s+/).filter(p=>p.length>=2).length >= 2;
+
+  if (!soloLetras || !dospalabras) {
+    input.style.borderColor = 'var(--red)';
+    input.placeholder = 'Solo letras — Ej: Juan Pérez';
+    setTimeout(()=>{
+      input.style.borderColor = '';
+      input.placeholder = 'Tu nombre completo';
+    }, 2500);
     return;
   }
+
   userName = nombre;
   iniciarApp();
 }
