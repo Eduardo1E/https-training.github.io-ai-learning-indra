@@ -228,6 +228,174 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
 textarea.admin-input{resize:vertical;min-height:80px;}
+
+/* ══ RESPONSIVE MOBILE ══════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Body sin overflow oculto en mobile */
+  body { overflow:auto; height:auto; min-height:100vh; }
+
+  /* TOPBAR mobile */
+  .topbar { height:auto; padding:10px 14px; flex-wrap:wrap; gap:8px; }
+  .topbar-logo { font-size:12px; }
+  .topbar-tag { display:none; }
+  .topbar-user { font-size:11px; }
+  .topbar-right { margin-left:auto; gap:10px; }
+  .prog-label { display:none; }
+  .prog-bar { width:80px; }
+
+  /* LAYOUT: sidebar arriba, contenido abajo */
+  .layout { flex-direction:column; overflow:visible; }
+
+  /* SIDEBAR como barra horizontal scrolleable */
+  .sidebar {
+    width:100%;
+    flex-direction:row;
+    overflow-x:auto;
+    overflow-y:hidden;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+    padding:8px 0;
+    flex-shrink:0;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .sidebar::-webkit-scrollbar { display:none; }
+  .sidebar-section-title { display:none; }
+  .sidebar-footer { display:none; }
+
+  /* Nav items como chips horizontales */
+  .nav-item {
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:8px 14px;
+    border-left:none;
+    border-bottom:3px solid transparent;
+    white-space:nowrap;
+    flex-shrink:0;
+    gap:4px;
+    min-width:80px;
+  }
+  .nav-item.active { border-bottom-color:var(--accent); background:rgba(79,142,247,.08); }
+  .nav-icon { width:32px; height:32px; font-size:13px; }
+  .nav-label-title { font-size:10px; text-align:center; }
+  .nav-label-sub { display:none; }
+  .nav-check { display:none !important; }
+
+  /* MAIN sin overflow oculto */
+  .main { overflow:visible; }
+
+  /* TABS */
+  .tabs { padding:0 8px; overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { padding:10px 14px; font-size:11px; white-space:nowrap; flex-shrink:0; }
+
+  /* CONTENT con padding reducido */
+  .content { padding:16px; overflow:visible; }
+
+  /* Module header */
+  .module-header { flex-direction:column; gap:10px; margin-bottom:16px; }
+  .module-num { width:40px; height:40px; font-size:16px; }
+  .module-title { font-size:17px; }
+  .module-desc { font-size:12px; }
+
+  /* Video player: más altura en mobile */
+  .video-player { min-height:200px; aspect-ratio:16/9; }
+
+  /* Concepts grid: 1 columna en mobile */
+  .concepts-grid { grid-template-columns:1fr; gap:8px; }
+  .concept-chip { font-size:12px; padding:12px 14px; }
+
+  /* Quiz */
+  .quiz-header { flex-wrap:wrap; gap:8px; }
+  .quiz-header-title { font-size:13px; }
+  .quiz-header-sub { font-size:10px; }
+  .quiz-body { padding:16px; }
+  .question-text { font-size:14px; }
+  .option { font-size:12px; padding:11px 12px; }
+  .quiz-nav { flex-direction:column; gap:12px; align-items:stretch; }
+  .quiz-nav .btn { width:100%; text-align:center; }
+  .q-dots { justify-content:center; }
+
+  /* Score card */
+  .score-card { padding:24px 16px; }
+  .score-circle { width:100px; height:100px; }
+  .score-num { font-size:28px; }
+  .badges { gap:8px; }
+  .badge { font-size:11px; padding:5px 10px; }
+
+  /* Botones en columna */
+  .score-card > div:last-child,
+  div[style*="display:flex;gap:12px;justify-content:center"] {
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  /* Completion */
+  .completion-screen { padding:24px 16px; }
+  .final-stats { gap:20px; }
+  .final-stat-num { font-size:24px; }
+
+  /* Modal conceptos */
+  .concept-wrap { margin:10px; }
+  .concept-modal-header { padding:16px; gap:12px; }
+  .concept-modal-icon { width:40px; height:40px; font-size:20px; }
+  .concept-modal-title { font-size:16px; }
+  .concept-modal-body { padding:16px; }
+  .concept-modal-def { font-size:13px; }
+  .concept-modal-practical { font-size:12px; }
+
+  /* Modal admin */
+  .admin-modal { margin:10px; max-height:90vh; }
+  .admin-modal-body { padding:16px; }
+  .admin-tabs { flex-wrap:wrap; gap:4px; }
+  .admin-tab { font-size:10px; padding:6px 8px; flex:unset; }
+
+  /* Popup ID admin */
+  .popup-card { padding:24px 20px; margin:16px; }
+  .popup-input { font-size:18px; }
+
+  /* Notificación desde abajo en mobile */
+  .notif {
+    top:auto;
+    bottom:20px;
+    right:16px;
+    left:16px;
+    transform:translateY(120px);
+    font-size:12px;
+  }
+  .notif.show { transform:translateY(0); }
+
+  /* Registro */
+  .reg-card { padding:28px 20px; border-radius:16px; margin:12px; }
+  .reg-title { font-size:19px; }
+  .reg-input { font-size:16px; } /* 16px evita zoom en iOS */
+  .reg-btn { font-size:14px; }
+  .reg-chips { display:none; }
+
+  /* Botones generales más grandes en mobile (touch targets) */
+  .btn { padding:12px 18px; font-size:13px; }
+  .btn-danger { padding:8px 12px; }
+
+  /* XP label en topbar en vez de sidebar */
+  .topbar::after {
+    content: attr(data-xp);
+    font-size:10px;
+    color:var(--muted);
+    font-family:'JetBrains Mono',monospace;
+    width:100%;
+    order:10;
+  }
+}
+
+/* Extra pequeño (iPhone SE, etc) */
+@media (max-width: 390px) {
+  .nav-item { min-width:70px; padding:6px 10px; }
+  .nav-label-title { font-size:9px; }
+  .content { padding:12px; }
+  .module-title { font-size:15px; }
+}
 </style>
 </head>
 <body>
