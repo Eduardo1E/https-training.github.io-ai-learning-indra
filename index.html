@@ -111,7 +111,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 .video-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
 .video-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
 .video-title-bar{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
-.video-player{position:relative;padding-bottom:56.25%;background:#000;}
+.video-player{position:relative;width:100%;aspect-ratio:16/9;background:#000;min-height:280px;}
 .video-player img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
 .video-player iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
 .play-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
@@ -795,11 +795,13 @@ function _crearYTPlayer(moduleIdx, videoId) {
     playerVars: {
       rel: 0,
       modestbranding: 1,
-      enablejsapi: 1,
-      origin: window.location.origin
+      autoplay: 0,
+      controls: 1,
+      fs: 1
     },
     events: {
-      onStateChange: (event) => onYTStateChange(event, moduleIdx)
+      onStateChange: (event) => onYTStateChange(event, moduleIdx),
+      onError: (event) => console.warn('YT Error:', event.data)
     }
   });
 }
@@ -856,7 +858,7 @@ function renderContent() {
       </div>
       <div class="video-block">
         <div class="video-header"><div class="video-dot"></div><div class="video-title-bar">${m.videoTitle}</div></div>
-        <div class="video-player" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000;">
+        <div class="video-player" style="position:relative;width:100%;aspect-ratio:16/9;background:#000;min-height:300px;">
           <div id="yt-player-${currentModule}" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
         </div>
         <div id="video-status-bar" style="padding:10px 16px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px">
