@@ -4,6 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AI Assisted Engineering – Learning Path | Minsait / Indra</title>
+<script src="https://www.youtube.com/iframe_api"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap');
 :root {
@@ -110,8 +111,9 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);height
 .video-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
 .video-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);}
 .video-title-bar{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);}
-.video-player{position:relative;padding-bottom:56.25%;background:#000;cursor:pointer;}
+.video-player{position:relative;padding-bottom:56.25%;background:#000;}
 .video-player img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
+.video-player iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
 .play-overlay{position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
 .play-btn{width:72px;height:72px;border-radius:50%;background:rgba(255,0,0,.9);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(0,0,0,.5);transition:transform .2s;}
 .play-btn:hover{transform:scale(1.1);}
@@ -665,15 +667,17 @@ async function verificarHabilitacion() {
 
 function actualizarTabQuiz() {
   const tabQuiz=document.getElementById('tab-quiz');
-  if (quizHabilitado) {
+  const videoVisto = moduleStates[currentModule] && moduleStates[currentModule].videoVisto;
+  const puedeReforzar = quizHabilitado || esAdmin || videoVisto;
+  if (puedeReforzar) {
     tabQuiz.className='tab'; tabQuiz.title='';
     tabQuiz.innerHTML='⚡ Refuerza';
     tabQuiz.onclick=function(){switchTab('quiz',this);};
   } else {
     tabQuiz.className='tab tab-locked';
-    tabQuiz.title='Refuerza lo aprendido no habilitado aún';
+    tabQuiz.title='Mira el video completo para desbloquear';
     tabQuiz.innerHTML='🔒 Refuerza';
-    tabQuiz.onclick=function(){showNotif('Refuerza lo aprendido no habilitado. Contacta a tu Focal Point.');};
+    tabQuiz.onclick=function(){showNotif('Mira el video completo para desbloquear el Refuerza.');};
   }
 }
 
@@ -734,7 +738,9 @@ function updateNav() {
   if (currentView==='eval') document.getElementById('nav-eval').classList.add('active');
 }
 function switchTab(tab,el) {
-  if (!quizHabilitado && !esAdmin && tab==='quiz') { showNotif('Refuerza lo aprendido no habilitado. Contacta a tu Focal Point.'); return; }
+  const videoVisto = moduleStates[currentModule].videoVisto || false;
+  const puedeReforzar = quizHabilitado || esAdmin || videoVisto;
+  if (!puedeReforzar && tab==='quiz') { showNotif('Mira el video completo para desbloquear el Refuerza.'); return; }
   currentTab=tab; currentView='module';
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active'); renderContent();
@@ -745,17 +751,104 @@ function switchTabVisual(tab) {
   document.getElementById(map[tab]).classList.add('active');
 }
 
+// ══ YOUTUBE PLAYER API ════════════════════════════════════════
+let ytPlayers = {};
+let ytAPIReady = false;
+let ytPendingQueue = []; // cola en vez de un solo pendiente
+
+function onYouTubeIframeAPIReady() {
+  ytAPIReady = true;
+  // Procesar todos los players pendientes
+  ytPendingQueue.forEach(({idx, videoId}) => _crearYTPlayer(idx, videoId));
+  ytPendingQueue = [];
+}
+
+function initYTPlayer(moduleIdx, videoId) {
+  if (!ytAPIReady) {
+    // Encolar — reemplazar si ya hay uno para este módulo
+    ytPendingQueue = ytPendingQueue.filter(p => p.idx !== moduleIdx);
+    ytPendingQueue.push({idx: moduleIdx, videoId});
+    return;
+  }
+  _crearYTPlayer(moduleIdx, videoId);
+}
+
+function _crearYTPlayer(moduleIdx, videoId) {
+  const containerId = `yt-player-${moduleIdx}`;
+  const container = document.getElementById(containerId);
+  if (!container) {
+    // El div aún no está en el DOM — reintentar en 200ms
+    setTimeout(() => _crearYTPlayer(moduleIdx, videoId), 200);
+    return;
+  }
+
+  // Destruir player anterior si existe
+  if (ytPlayers[moduleIdx]) {
+    try { ytPlayers[moduleIdx].destroy(); } catch(e) {}
+    delete ytPlayers[moduleIdx];
+  }
+
+  ytPlayers[moduleIdx] = new YT.Player(containerId, {
+    videoId: videoId,
+    width: '100%',
+    height: '100%',
+    playerVars: {
+      rel: 0,
+      modestbranding: 1,
+      enablejsapi: 1,
+      origin: window.location.origin
+    },
+    events: {
+      onStateChange: (event) => onYTStateChange(event, moduleIdx)
+    }
+  });
+}
+
+function onYTStateChange(event, moduleIdx) {
+  // YT.PlayerState.ENDED = 0
+  if (event.data === 0) {
+    onVideoTerminado(moduleIdx);
+  }
+}
+
+async function onVideoTerminado(moduleIdx) {
+  if (moduleStates[moduleIdx].videoVisto) return; // ya procesado
+  moduleStates[moduleIdx].videoVisto = true;
+
+  // Actualizar barra de estado del video
+  const bar = document.getElementById('video-status-bar');
+  if (bar) bar.innerHTML = `<span style="color:var(--green)">✓ Video completado — Refuerza lo aprendido desbloqueado</span>`;
+
+  // Habilitar quiz para este módulo si no es admin (admin ya tiene acceso)
+  if (!esAdmin) {
+    quizHabilitado = true;
+    actualizarTabQuiz();
+    // Registrar en Sheets en modo no-cors (sin esperar respuesta)
+    try {
+      const params = new URLSearchParams({accion:'habilitar', admin:'auto', correo: userEmail});
+      await fetch(`${SHEETS_URL}?${params.toString()}`, {method:'GET', mode:'no-cors'});
+    } catch(e) { console.warn('Auto-habilitar Sheets:', e); }
+  }
+
+  showNotif('🎉 ¡Video completado! Refuerza lo aprendido desbloqueado');
+  // Renderizar botón activo
+  renderContent();
+}
+
 // ══ RENDER ════════════════════════════════════════════════════
 function renderContent() {
   if (currentView==='eval') { renderEval(); return; }
   const m=modules[currentModule], c=document.getElementById('mainContent');
-  const quizBtn = quizHabilitado||esAdmin
+  const videoVisto = moduleStates[currentModule].videoVisto || false;
+  const puedeReforzar = quizHabilitado || esAdmin || videoVisto;
+  const quizBtn = puedeReforzar
     ? `<button class="btn btn-primary" onclick="goToQuiz()">⚡ Refuerza lo aprendido</button>`
-    : `<button class="btn btn-ghost" style="cursor:not-allowed;opacity:.5" title="No habilitado">🔒 Refuerza lo aprendido</button>`;
+    : `<button class="btn btn-ghost" style="cursor:not-allowed;opacity:.5" title="Mira el video completo para desbloquear">🔒 Refuerza lo aprendido</button>`;
   const adminSkip = esAdmin
     ? `<button class="btn" style="background:rgba(255,0,84,.15);border:1px solid rgba(255,0,84,.3);color:#ff6b9d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="skipModule(${currentModule})">⏭ Avanzar módulo (Admin)</button>`
     : '';
   if (currentTab==='video') {
+    const videoWatched = moduleStates[currentModule].videoVisto || false;
     c.innerHTML=`
       <div class="module-header">
         <div class="module-num">${m.num}</div>
@@ -763,18 +856,22 @@ function renderContent() {
       </div>
       <div class="video-block">
         <div class="video-header"><div class="video-dot"></div><div class="video-title-bar">${m.videoTitle}</div></div>
-        <div class="video-player" onclick="window.open('${m.videoUrl}','_blank')">
-          <img src="https://img.youtube.com/vi/${m.videoId}/maxresdefault.jpg" onerror="this.src='https://img.youtube.com/vi/${m.videoId}/hqdefault.jpg'" alt="thumbnail"/>
-          <div class="play-overlay">
-            <div class="play-btn"><svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div>
-            <div style="text-align:center"><div style="color:#fff;font-size:14px;font-weight:600">Ver video en YouTube</div><div style="color:rgba(255,255,255,.6);font-size:11px;margin-top:4px;font-family:'JetBrains Mono',monospace">Se abrirá en nueva pestaña</div></div>
-          </div>
+        <div class="video-player" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:#000;">
+          <div id="yt-player-${currentModule}" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
+        </div>
+        <div id="video-status-bar" style="padding:10px 16px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted);border-top:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          ${videoWatched
+            ? `<span style="color:var(--green)">✓ Video completado — Refuerza lo aprendido desbloqueado</span>`
+            : `<span>▶ Mira el video completo para desbloquear el Refuerza lo aprendido</span>`}
         </div>
       </div>
       <div style="display:flex;gap:12px;align-items:center;margin-top:4px;flex-wrap:wrap">
         ${quizBtn} ${adminSkip}
         ${moduleStates[currentModule].completed?'<span style="color:var(--green);font-size:13px">✓ Módulo completado</span>':''}
       </div>`;
+    // Esperar que el DOM renderice el div antes de inicializar el player
+    setTimeout(() => initYTPlayer(currentModule, m.videoId), 100);
+
   } else if (currentTab==='notes') {
     c.innerHTML=`
       <div class="module-header">
@@ -786,7 +883,8 @@ function renderContent() {
       </div>
       <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">${quizBtn} ${adminSkip}</div>`;
   } else {
-    if (!quizHabilitado && !esAdmin) { currentTab='video'; switchTabVisual('video'); renderContent(); return; }
+    const videoVisto2 = moduleStates[currentModule].videoVisto || false;
+    if (!quizHabilitado && !esAdmin && !videoVisto2) { currentTab='video'; switchTabVisual('video'); renderContent(); return; }
     if (moduleStates[currentModule].quizDone) renderScoreCard(); else renderQuiz();
   }
 }
@@ -800,7 +898,8 @@ function skipModule(idx) {
 }
 
 function goToQuiz() {
-  if (!quizHabilitado && !esAdmin) { showNotif('Refuerza lo aprendido no habilitado.'); return; }
+  const videoVisto = moduleStates[currentModule].videoVisto || false;
+  if (!quizHabilitado && !esAdmin && !videoVisto) { showNotif('Mira el video completo para desbloquear el Refuerza.'); return; }
   currentTab='quiz'; currentView='module'; switchTabVisual('quiz');
   // 5 preguntas aleatorias del pool de 10
   const pool=[...modules[currentModule].quiz];
