@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AI Assisted Engineering – Learning Path | Minsait / Indra</title>
+<title>AI Assisted Engineering – Learning Path | MINSAIT / INDRA</title>
 <script src="https://www.youtube.com/iframe_api"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap');
@@ -456,6 +456,7 @@ textarea.admin-input{resize:vertical;min-height:80px;}
   <div class="topbar-user" id="topbarUser"></div>
   <div class="topbar-right">
     <button class="admin-btn" id="adminBtn" style="display:none" onclick="openAdmin()">⚙ Admin</button>
+    <button class="admin-btn" id="logoutBtn" style="display:none;background:rgba(100,116,139,.1);border-color:rgba(100,116,139,.3);color:#64748b" onclick="cerrarSesion()" title="Cerrar sesión">↩ Salir</button>
     <div class="prog-label" id="progressLabel">0 / 4 módulos</div>
     <div class="prog-bar"><div class="prog-fill" id="globalBar" style="width:0%"></div></div>
   </div>
@@ -731,7 +732,7 @@ const modules = [
 // ══ STATE ═════════════════════════════════════════════════════
 let userName='', userEmail='', userSquad='', userFocal='';
 let currentModule=0, currentTab='video', currentView='module';
-let moduleStates = modules.map(()=>({completed:false,quizDone:false,score:0}));
+let moduleStates = modules.map(()=>({completed:false,quizDone:false,score:0,videoVisto:false,refuerzaHabilitado:false}));
 let quizState = {current:0,answered:false,selected:null,correctCount:0,preguntas:[]};
 let quizHabilitado = false;
 let esAdmin = false;
@@ -742,6 +743,47 @@ const NOTA_MINIMA = 4; // de 5 preguntas aleatorias
 const NOTA_MINIMA_EVAL = 7;
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycby3hJL8WUmGWom8gwUSv0dWvVIyhBjCn5aqdY3Vvc7SW7nXiug7_R8ZCnhOqLOa4y8/exec';
 const FORMSUBMIT_EMAIL = 'ejescusa@indracompany.com';
+const SESSION_KEY = 'ai_learning_v1';
+
+// ══ PERSISTENCIA DE SESIÓN ════════════════════════════════════
+function guardarSesion() {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      userName, userEmail, userSquad, userFocal, esAdmin,
+      quizHabilitado, moduleStates, currentModule
+    }));
+  } catch(e) {}
+}
+
+async function restaurarSesion() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s.userEmail) return false;
+
+    userName      = s.userName     || '';
+    userEmail     = s.userEmail    || '';
+    userSquad     = s.userSquad    || '';
+    userFocal     = s.userFocal    || '';
+    esAdmin       = s.esAdmin      || false;
+    currentModule = s.currentModule|| 0;
+    moduleStates  = s.moduleStates || modules.map(()=>({completed:false,quizDone:false,score:0,videoVisto:false,refuerzaHabilitado:false}));
+
+    // Verificar habilitación actualizada desde Sheets
+    if (esAdmin) {
+      quizHabilitado = true;
+    } else {
+      await verificarHabilitacion();
+    }
+    return true;
+  } catch(e) { return false; }
+}
+
+function cerrarSesion() {
+  try { localStorage.removeItem(SESSION_KEY); } catch(e) {}
+  location.reload();
+}
 
 // ══ VALIDACIONES ══════════════════════════════════════════════
 function esNombreValido(nombre) {
@@ -813,10 +855,13 @@ async function finalizarRegistro() {
   document.getElementById('regScreen').classList.add('hidden');
   document.getElementById('topbarUser').innerHTML=`👤 <span>${userName}</span>${esAdmin?' <span style="color:#FF0054;font-size:10px;margin-left:4px">ADMIN</span>':''}`;
   if (esAdmin) document.getElementById('adminBtn').style.display='flex';
+  document.getElementById('logoutBtn').style.display='flex';
 
   actualizarTabQuiz();
   actualizarNavEval();
+  await cargarEvalDesdeSheets(); // cargar preguntas y estado desde Sheets
   updateNav(); renderContent();
+  guardarSesion();
 
   const fechaIngreso=new Date().toLocaleString('es-PE',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
   enviarASheets({accion:'registrar',nombre:userName,correo:userEmail,squad:userSquad,focal:userFocal,
@@ -830,13 +875,18 @@ async function verificarHabilitacion() {
     const resp=await fetch(`${SHEETS_URL}?${params.toString()}`,{method:'GET',mode:'cors'});
     const data=await resp.json();
     quizHabilitado=data.habilitado||false;
+    // Si el admin habilitó al usuario globalmente, marcar todos los módulos
+    if (quizHabilitado) {
+      moduleStates.forEach(m => m.refuerzaHabilitado=true);
+    }
   } catch(e) { quizHabilitado=false; }
 }
 
 function actualizarTabQuiz() {
   const tabQuiz=document.getElementById('tab-quiz');
-  const videoVisto = moduleStates[currentModule] && moduleStates[currentModule].videoVisto;
-  const puedeReforzar = quizHabilitado || esAdmin || videoVisto;
+  const mod = moduleStates[currentModule] || {};
+  // Habilitado si: admin, o el admin lo habilitó globalmente, o este módulo específico tiene video visto o refuerza habilitado o ya lo completó
+  const puedeReforzar = esAdmin || quizHabilitado || mod.refuerzaHabilitado || mod.videoVisto || mod.quizDone;
   if (puedeReforzar) {
     tabQuiz.className='tab'; tabQuiz.title='';
     tabQuiz.innerHTML='⚡ Refuerza';
@@ -865,7 +915,20 @@ function actualizarNavEval() {
 }
 
 // Enter entre campos
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // Intentar restaurar sesión guardada
+  const restaurada = await restaurarSesion();
+  if (restaurada) {
+    document.getElementById('regScreen').classList.add('hidden');
+    document.getElementById('topbarUser').innerHTML=`👤 <span>${userName}</span>${esAdmin?' <span style="color:#FF0054;font-size:10px;margin-left:4px">ADMIN</span>':''}`;
+    if (esAdmin) document.getElementById('adminBtn').style.display='flex';
+    document.getElementById('logoutBtn').style.display='flex';
+    await cargarEvalDesdeSheets(); // cargar preguntas y estado desde Sheets
+    actualizarTabQuiz();
+    actualizarNavEval();
+    currentTab='video'; switchTabVisual('video');
+    updateNav(); updateXP(); updateGlobalProgress(); renderContent();
+  }
   [['f-nombre','f-correo'],['f-correo','f-squad'],['f-squad','f-focal']].forEach(([a,b])=>{
     document.getElementById(a).addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById(b)?.focus(); });
   });
@@ -888,6 +951,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function loadModule(idx) {
   if (!esAdmin && document.getElementById('nav-'+idx).classList.contains('locked')) return;
   currentModule=idx; currentTab='video'; currentView='module';
+  actualizarTabQuiz(); // actualizar tab según estado del módulo seleccionado
   updateNav(); switchTabVisual('video'); renderContent();
 }
 function loadEval() {
@@ -906,12 +970,16 @@ function updateNav() {
   if (currentView==='eval') document.getElementById('nav-eval').classList.add('active');
 }
 function switchTab(tab,el) {
-  const videoVisto = moduleStates[currentModule].videoVisto || false;
-  const puedeReforzar = quizHabilitado || esAdmin || videoVisto;
+  const mod = moduleStates[currentModule] || {};
+  const puedeReforzar = esAdmin || quizHabilitado || mod.refuerzaHabilitado || mod.videoVisto || mod.quizDone;
   if (!puedeReforzar && tab==='quiz') { showNotif('Mira el video completo para desbloquear el Refuerza.'); return; }
   currentTab=tab; currentView='module';
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active'); renderContent();
+  el.classList.add('active');
+  if (tab==='quiz' && moduleStates[currentModule].quizDone) {
+    renderScoreCard(); return;
+  }
+  renderContent();
 }
 function switchTabVisual(tab) {
   const map={video:'tab-video',quiz:'tab-quiz',notes:'tab-notes'};
@@ -982,18 +1050,16 @@ function onYTStateChange(event, moduleIdx) {
 }
 
 async function onVideoTerminado(moduleIdx) {
-  if (moduleStates[moduleIdx].videoVisto) return; // ya procesado
+  if (moduleStates[moduleIdx].videoVisto) return;
   moduleStates[moduleIdx].videoVisto = true;
+  moduleStates[moduleIdx].refuerzaHabilitado = true; // solo este módulo
+  guardarSesion();
 
-  // Actualizar barra de estado del video
   const bar = document.getElementById('video-status-bar');
   if (bar) bar.innerHTML = `<span style="color:var(--green)">✓ Video completado — Refuerza lo aprendido desbloqueado</span>`;
 
-  // Habilitar quiz para este módulo si no es admin (admin ya tiene acceso)
   if (!esAdmin) {
-    quizHabilitado = true;
-    actualizarTabQuiz();
-    // Registrar en Sheets en modo no-cors (sin esperar respuesta)
+    actualizarTabQuiz(); // actualiza el tab según el módulo actual
     try {
       const params = new URLSearchParams({accion:'habilitar', admin:'auto', correo: userEmail});
       await fetch(`${SHEETS_URL}?${params.toString()}`, {method:'GET', mode:'no-cors'});
@@ -1001,7 +1067,6 @@ async function onVideoTerminado(moduleIdx) {
   }
 
   showNotif('🎉 ¡Video completado! Refuerza lo aprendido desbloqueado');
-  // Renderizar botón activo
   renderContent();
 }
 
@@ -1009,10 +1074,13 @@ async function onVideoTerminado(moduleIdx) {
 function renderContent() {
   if (currentView==='eval') { renderEval(); return; }
   const m=modules[currentModule], c=document.getElementById('mainContent');
-  const videoVisto = moduleStates[currentModule].videoVisto || false;
-  const puedeReforzar = quizHabilitado || esAdmin || videoVisto;
+  const mod = moduleStates[currentModule] || {};
+  const videoVisto = mod.videoVisto || false;
+  // Habilitado si: admin, o habilitado globalmente por admin, o este módulo tiene video visto/refuerza habilitado/ya completado
+  const puedeReforzar = esAdmin || quizHabilitado || mod.refuerzaHabilitado || videoVisto || mod.quizDone;
+  const yaCompletado = mod.quizDone || false;
   const quizBtn = puedeReforzar
-    ? `<button class="btn btn-primary" onclick="goToQuiz()">⚡ Refuerza lo aprendido</button>`
+    ? `<button class="btn btn-primary" onclick="goToQuiz()">${yaCompletado ? '📊 Ver resultado' : '⚡ Refuerza lo aprendido'}</button>`
     : `<button class="btn btn-ghost" style="cursor:not-allowed;opacity:.5" title="Mira el video completo para desbloquear">🔒 Refuerza lo aprendido</button>`;
   const adminSkip = esAdmin
     ? `<button class="btn" style="background:rgba(255,0,84,.15);border:1px solid rgba(255,0,84,.3);color:#ff6b9d;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="skipModule(${currentModule})">⏭ Avanzar módulo (Admin)</button>`
@@ -1054,7 +1122,11 @@ function renderContent() {
       <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">${quizBtn} ${adminSkip}</div>`;
   } else {
     const videoVisto2 = moduleStates[currentModule].videoVisto || false;
-    if (!quizHabilitado && !esAdmin && !videoVisto2) { currentTab='video'; switchTabVisual('video'); renderContent(); return; }
+    const refuerzaMod = moduleStates[currentModule].refuerzaHabilitado || false;
+    const quizDoneMod = moduleStates[currentModule].quizDone || false;
+    if (!esAdmin && !quizHabilitado && !videoVisto2 && !refuerzaMod && !quizDoneMod) {
+      currentTab='video'; switchTabVisual('video'); renderContent(); return;
+    }
     if (moduleStates[currentModule].quizDone) renderScoreCard(); else renderQuiz();
   }
 }
@@ -1068,10 +1140,13 @@ function skipModule(idx) {
 }
 
 function goToQuiz() {
-  const videoVisto = moduleStates[currentModule].videoVisto || false;
-  if (!quizHabilitado && !esAdmin && !videoVisto) { showNotif('Mira el video completo para desbloquear el Refuerza.'); return; }
+  const mod = moduleStates[currentModule];
+  const puedeReforzar = esAdmin || quizHabilitado || mod.videoVisto || mod.refuerzaHabilitado || mod.quizDone;
+  if (!puedeReforzar) { showNotif('Mira el video completo para desbloquear el Refuerza.'); return; }
+  if (mod.quizDone) {
+    currentTab='quiz'; switchTabVisual('quiz'); renderScoreCard(); return;
+  }
   currentTab='quiz'; currentView='module'; switchTabVisual('quiz');
-  // 5 preguntas aleatorias del pool de 10
   const pool=[...modules[currentModule].quiz];
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
   quizState={current:0,answered:false,selected:null,correctCount:0,preguntas:pool.slice(0,5)};
@@ -1130,6 +1205,7 @@ function nextQ() {
     moduleStates[currentModule].score=score;
     moduleStates[currentModule].completed=aprobado;
     updateXP(); updateNav(); updateGlobalProgress();
+    guardarSesion(); // persistir progreso
     if (aprobado && moduleStates.every(s=>s.completed)) showCompletion();
     else renderScoreCard();
     showNotif(aprobado?`Módulo ${currentModule+1} aprobado ✓ +${score*40} XP`:`Score: ${score}/${total} — Necesitas ${NOTA_MINIMA} para avanzar`);
@@ -1213,12 +1289,12 @@ function showCompletion() {
 function openAdmin() {
   document.getElementById('adminSubtitle').textContent=userEmail;
   document.getElementById('adminOverlay').classList.add('show');
-  // activar tab usuarios por defecto
   switchAdminTab('usuarios', document.getElementById('atab-usuarios'));
   cargarListaHabilitados();
   renderListaAdmins();
   cargarPreguntasAdmin();
   renderPreguntasEval();
+  _actualizarUIEval();
 }
 function closeAdmin() { document.getElementById('adminOverlay').classList.remove('show'); }
 
@@ -1344,9 +1420,28 @@ function guardarPregunta() {
 }
 
 // ══ EVALUACIÓN FINAL ══════════════════════════════════════════
-function toggleEvaluacion() {
-  evalHabilitada=!evalHabilitada;
-  const badge=document.getElementById('eval-estado-badge'), btn=document.getElementById('eval-toggle-btn');
+// ══ EVALUACIÓN FINAL — persistencia en Sheets ═════════════════
+async function toggleEvaluacion() {
+  const btn=document.getElementById('eval-toggle-btn');
+  btn.disabled=true; btn.textContent='Guardando...';
+  try {
+    const params=new URLSearchParams({accion:'toggle_eval', admin:userEmail});
+    const resp=await fetch(`${SHEETS_URL}?${params.toString()}`,{method:'GET',mode:'cors'});
+    const data=await resp.json();
+    if(data.ok) {
+      evalHabilitada=data.habilitada;
+      _actualizarUIEval();
+      actualizarNavEval();
+      showNotif(evalHabilitada?'Evaluación Final habilitada ✓':'Evaluación Final inhabilitada');
+    }
+  } catch(e) { showNotif('Error al cambiar estado'); }
+  btn.disabled=false;
+}
+
+function _actualizarUIEval() {
+  const badge=document.getElementById('eval-estado-badge');
+  const btn=document.getElementById('eval-toggle-btn');
+  if(!badge||!btn) return;
   if(evalHabilitada){
     badge.style.cssText='font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(34,211,165,.1);border:1px solid rgba(34,211,165,.3);color:var(--green)';
     badge.textContent='✓ Habilitada';
@@ -1356,8 +1451,6 @@ function toggleEvaluacion() {
     badge.textContent='🔒 Inhabilitada';
     btn.textContent='🔓 Habilitar Evaluación Final';
   }
-  actualizarNavEval();
-  showNotif(evalHabilitada?'Evaluación Final habilitada ✓':'Evaluación Final inhabilitada');
 }
 
 function agregarPreguntaEval() {
@@ -1371,7 +1464,18 @@ function agregarPreguntaEval() {
   [0,1,2,3].forEach(i=>document.getElementById(`eval-opt-new-${i}`).value='');
   document.getElementById('eval-explain-new').value='';
   renderPreguntasEval();
-  showNotif('Pregunta de evaluación agregada ✓');
+  _guardarPreguntasEval();
+}
+
+async function _guardarPreguntasEval() {
+  try {
+    const params=new URLSearchParams({
+      accion:'guardar_eval', admin:userEmail,
+      preguntas:JSON.stringify(evalPreguntas)
+    });
+    await fetch(`${SHEETS_URL}?${params.toString()}`,{method:'GET',mode:'no-cors'});
+    showNotif('Pregunta guardada en Sheets ✓');
+  } catch(e) { showNotif('Pregunta agregada (error al guardar en Sheets)'); }
 }
 
 function renderPreguntasEval() {
@@ -1392,10 +1496,23 @@ function renderPreguntasEval() {
     </div>`).join('');
 }
 
-function quitarPreguntaEval(idx) {
+async function quitarPreguntaEval(idx) {
   evalPreguntas.splice(idx,1);
   renderPreguntasEval();
-  showNotif('Pregunta eliminada ✓');
+  await _guardarPreguntasEval();
+}
+
+async function cargarEvalDesdeSheets() {
+  try {
+    const params=new URLSearchParams({accion:'cargar_eval'});
+    const resp=await fetch(`${SHEETS_URL}?${params.toString()}`,{method:'GET',mode:'cors'});
+    const data=await resp.json();
+    if(data.ok){
+      evalPreguntas=data.preguntas||[];
+      evalHabilitada=data.habilitada||false;
+      actualizarNavEval();
+    }
+  } catch(e) { console.warn('Error cargando eval:', e); }
 }
 
 function renderEval() {
@@ -1534,185 +1651,310 @@ function downloadConstancia(evalScore, evalTotal, evalPct, isEval=false) {
 }
 
 function _generarPDF(evalScore, evalTotal, evalPct, isEval=false) {
+  if (isEval) {
+    _generarCertificadoFinal(evalScore, evalTotal, evalPct);
+  } else {
+    _generarConstanciaParticipacion();
+  }
+}
+
+// ── CONSTANCIA DE PARTICIPACIÓN ──────────────────────────────
+function _generarConstanciaParticipacion() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
-  // A4 landscape: 297 x 210 mm
-
   const W=297, H=210;
-  const RED='#FF0054', DARK='#480E2A';
 
-  // ── Fondo blanco ──
-  doc.setFillColor(255,255,255);
-  doc.rect(0,0,W,H,'F');
+  // Fondo blanco
+  doc.setFillColor(255,255,255); doc.rect(0,0,W,H,'F');
 
-  // ── Marcos rojos Minsait ──
+  // Marcos rojos
   doc.setFillColor(255,0,84);
-  doc.rect(0,0,W,4,'F');      // top
-  doc.rect(0,H-4,W,4,'F');    // bottom
-  doc.rect(0,0,3,H,'F');      // left
-  doc.rect(W-3,0,3,H,'F');    // right
+  doc.rect(0,0,W,2.5,'F'); doc.rect(0,H-2.5,W,2.5,'F');
+  doc.rect(0,0,2.5,H,'F'); doc.rect(W-2.5,0,2.5,H,'F');
 
-  // ── Franja header borgoña ──
-  doc.setFillColor(72,14,42);
-  doc.rect(0,4,W,22,'F');
+  // Header borgoña
+  doc.setFillColor(72,14,42); doc.rect(0,2.5,W,26,'F');
 
-  // ── Logo MINSAIT en header ──
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(16);
-  doc.text('MINSAIT',10,16);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(7);
-  doc.setTextColor(200,180,185);
-  doc.text('An Indra Company',10,22);
+  // Logo
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('MINSAIT',8,15);
+  doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(200,180,185);
+  doc.text('AN INDRA COMPANY',8,21);
 
-  // ── Texto header derecha ──
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(7);
-  doc.setTextColor(220,210,215);
-  doc.text('AI ASSISTED ENGINEERING PROGRAM',W-10,15,{align:'right'});
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(6);
-  doc.setTextColor(180,160,165);
-  doc.text('Minsait / Indra · Data Engineering',W-10,21,{align:'right'});
+  // Header derecha
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(220,210,215);
+  doc.text('AI ASSISTED ENGINEERING PROGRAM',W-8,14,{align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(180,160,165);
+  doc.text('Minsait / Indra · Data Engineering · 2026',W-8,20,{align:'right'});
 
-  // ── Acento vertical rojo ──
-  doc.setFillColor(255,0,84);
-  doc.rect(10,30,1.5,32,'F');
+  // Línea roja bajo header
+  doc.setFillColor(255,0,84); doc.rect(2.5,28.5,W*0.55,1,'F');
 
-  // ── Etiqueta tipo ──
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(7);
-  doc.setTextColor(72,14,42);
-  doc.text(isEval?'CONSTANCIA DE EVALUACIÓN FINAL':'CONSTANCIA DE PARTICIPACIÓN',14,36);
+  // Acento vertical
+  doc.setFillColor(255,0,84); doc.rect(8,34,1.5,38,'F');
 
-  // ── Título grande ──
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(28);
-  doc.setTextColor(72,14,42);
-  doc.text(isEval?'Evaluación Final':'Participación',14,52);
+  // Tipo
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(255,0,84);
+  doc.text('CONSTANCIA DE PARTICIPACIÓN',12,38);
 
-  // ── Línea roja bajo título ──
-  doc.setFillColor(255,0,84);
-  doc.rect(14,55,180,1,'F');
+  // Título
+  doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor(72,14,42);
+  doc.text('Learning',12,52);
+  doc.setTextColor(255,0,84);
+  doc.text('Path',12,62);
 
-  // ── Cuerpo ──
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100,100,100);
-  doc.text('Se hace constar que',14,64);
+  // Línea roja bajo título
+  doc.setFillColor(255,0,84); doc.rect(12,65,70,0.8,'F');
+
+  // Certifica
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(150,150,150);
+  doc.text('Se hace constar que',12,73);
 
   // Nombre
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(22);
-  doc.setTextColor(72,14,42);
-  doc.text(userName,14,76);
-
-  // Línea bajo nombre
-  const nameWidth = doc.getTextWidth(userName);
-  doc.setFillColor(255,0,84);
-  doc.rect(14,79,Math.min(nameWidth,240),0.8,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(26,26,46);
+  doc.text(userName,12,84);
+  const nw = Math.min(doc.getTextWidth(userName), 130);
+  doc.setFillColor(255,0,84); doc.rect(12,87,nw,0.8,'F');
 
   // Descripción
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
-  doc.setTextColor(80,80,80);
-  doc.text(
-    isEval
-      ? 'aprobó satisfactoriamente la Evaluación Final del programa'
-      : 'participó y completó satisfactoriamente la ruta de capacitación',
-    14, 87
-  );
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+  doc.text('participó y completó satisfactoriamente la ruta de capacitación',12,94);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(72,14,42);
+  doc.text('AI Assisted Engineering Learning Path',12,101);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(180,180,180);
+  doc.text(`${userSquad}  ·  Focal Point: ${userFocal}  ·  ${userEmail}`,12,107);
 
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
-  doc.setTextColor(72,14,42);
-  doc.text('AI Assisted Engineering Learning Path',14,95);
+  // Panel derecho — fondo rojo
+  const px=158, pw=133, ph=115, py=30;
+  doc.setFillColor(255,0,84); doc.roundedRect(px,py,pw,ph,4,4,'F');
 
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(120,120,120);
-  doc.text(`${userSquad}  ·  Focal Point: ${userFocal}  ·  ${userEmail}`,14,102);
+  // Stats título
+  doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(255,200,200);
+  doc.text('RESULTADOS GLOBALES',px+pw/2,py+8,{align:'center'});
 
-  // ── Separador ──
-  doc.setDrawColor(220,220,220);
-  doc.setLineWidth(0.4);
-  doc.line(10,108,W-10,108);
-
-  // ── Stats ──
-  const totalScore = moduleStates.reduce((a,s)=>a+s.score,0);
-  const pct = isEval ? evalPct : Math.round((totalScore/20)*100);
-  const totalXP = totalScore*40;
-  const stats = isEval
-    ? [['4/4','Módulos'],[`${evalScore}/${evalTotal}`,'Score Evaluación'],[`${pct}%`,'Porcentaje'],[`${totalXP} XP`,'XP Total']]
-    : [['4/4','Módulos'],[`${pct}%`,'Score Global'],[`${totalXP} XP`,'XP Total'],[`${totalScore}/20`,'Correctas']];
-  const statX = [40, 95, 160, 225];
-
+  // Stats grid 2x2
+  const totalScore=moduleStates.reduce((a,s)=>a+s.score,0);
+  const pct=Math.round((totalScore/20)*100), totalXP=totalScore*40;
+  const stats=[['4/4','Módulos'],[`${pct}%`,'Score Global'],[`${totalXP} XP`,'XP Total'],[`${totalScore}/20`,'Correctas']];
+  const sx=[px+20,px+80]; const sy=[py+22,py+42];
   stats.forEach(([v,l],i)=>{
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(16);
-    doc.setTextColor(255,0,84);
-    doc.text(v, statX[i], 122, {align:'center'});
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(7);
-    doc.setTextColor(140,140,140);
-    doc.text(l, statX[i], 128, {align:'center'});
+    const x=sx[i%2], y=sy[Math.floor(i/2)];
+    doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
+    doc.text(v,x,y,{align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(255,200,200);
+    doc.text(l,x,y+5,{align:'center'});
   });
 
-  // Detalle módulos (solo learning path)
-  if (!isEval) {
-    modules.forEach((m,i)=>{
-      const s=moduleStates[i].score, p=Math.round((s/5)*100);
-      doc.setFont('helvetica','bold');
-      doc.setFontSize(6.5);
-      doc.setTextColor(s>=NOTA_MINIMA?34:245, s>=NOTA_MINIMA?211:158, s>=NOTA_MINIMA?165:11);
-      doc.text(`${m.num}: ${s}/5 (${p}%)`, statX[i], 135, {align:'center'});
-    });
-  }
+  // Separador
+  doc.setDrawColor(255,100,130); doc.setLineWidth(0.3);
+  doc.line(px+6,py+55,px+pw-6,py+55);
 
-  // ── Separador inferior ──
-  doc.setDrawColor(220,220,220);
-  doc.setLineWidth(0.4);
-  doc.line(10,140,W-10,140);
+  // Módulos título
+  doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(255,200,200);
+  doc.text('DETALLE POR MÓDULO',px+pw/2,py+62,{align:'center'});
 
-  // ── Fecha ──
+  // Módulos filas
+  const mods=[
+    ['01 · Engineering Harness'],['02 · Buenas Prácticas'],
+    ['03 · Subagents & Context'],['04 · Proyecto End-to-End']
+  ];
+  mods.forEach(([mn],i)=>{
+    const s=moduleStates[i]?.score||0;
+    const my=py+70+i*11;
+    doc.setFillColor(255,255,255,0.08); doc.roundedRect(px+5,my-5,pw-10,9,2,2,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(255,255,255);
+    doc.text(mn,px+9,my);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(255,255,255);
+    doc.text(`${s}/5`,px+pw-10,my,{align:'right'});
+  });
+
+  // Footer borgoña
+  doc.setFillColor(72,14,42); doc.rect(0,H-28,W,28,'F');
+
+  // Fecha
   const fecha=new Date().toLocaleDateString('es-PE',{year:'numeric',month:'long',day:'numeric'});
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(72,14,42);
-  doc.text(`Fecha de emisión: ${fecha}`,14,150);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(180,160,165);
+  doc.text(`Fecha de emisión: ${fecha}`,8,H-17);
 
-  // ── Badge pill ──
-  doc.setFillColor(255,0,84,0.08);
-  doc.setDrawColor(255,0,84);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(14,155,80,10,3,3,'FD');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(7.5);
-  doc.setTextColor(255,0,84);
-  doc.text(isEval?'AI Engineer Evaluated':'AI Engineer Certified',54,162,{align:'center'});
+  // Badge
+  doc.setFillColor(255,0,84,0.2); doc.setDrawColor(255,0,84); doc.setLineWidth(0.4);
+  doc.roundedRect(W/2-35,H-24,70,12,4,4,'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,0,84);
+  doc.text('🏆 AI Engineer Certified',W/2,H-16,{align:'center'});
 
-  // ── Sello circular derecha ──
-  doc.setDrawColor(255,0,84);
-  doc.setLineWidth(1.5);
-  doc.circle(W-35,162,18,'S');
-  doc.setDrawColor(255,0,84,0.3);
-  doc.setLineWidth(0.5);
-  doc.circle(W-35,162,15,'S');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(18);
-  doc.setTextColor(255,0,84);
-  doc.text('✓',W-35,166,{align:'center'});
-  doc.setFontSize(5.5);
-  doc.setTextColor(72,14,42);
-  doc.text('MINSAIT / INDRA',W-35,173,{align:'center'});
+  // Sello
+  doc.setDrawColor(255,0,84); doc.setLineWidth(1.2);
+  doc.circle(W-18,H-14,10,'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(255,0,84);
+  doc.text('✓',W-18,H-11,{align:'center'});
+  doc.setFontSize(4.5); doc.setTextColor(180,140,150);
+  doc.text('MINSAIT',W-18,H-6,{align:'center'});
 
-  // ── Descargar ──
-  const suffix = isEval?'_EvaluacionFinal':'_LearningPath';
-  const filename = `Constancia_Minsait${suffix}_${userName.replace(/\s+/g,'_')}.pdf`;
-  doc.save(filename);
-  showNotif('Constancia PDF descargada ✓');
+  doc.save(`Constancia_Minsait_LearningPath_${userName.replace(/\s+/g,'_')}.pdf`);
+  showNotif('Constancia descargada ✓');
 }
+
+// ── CERTIFICADO FINAL ─────────────────────────────────────────
+function _generarCertificadoFinal(evalScore, evalTotal, evalPct) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const W=297, H=210;
+
+  // Fondo blanco
+  doc.setFillColor(255,255,255); doc.rect(0,0,W,H,'F');
+
+  // Marcos rojos exterior
+  doc.setFillColor(255,0,84);
+  doc.rect(0,0,W,3,'F'); doc.rect(0,H-3,W,3,'F');
+  doc.rect(0,0,3,H,'F'); doc.rect(W-3,0,3,H,'F');
+
+  // Marco interior fino borgoña
+  doc.setDrawColor(72,14,42); doc.setLineWidth(0.4);
+  doc.rect(8,8,W-16,H-16,'S');
+
+  // Header borgoña centrado
+  doc.setFillColor(72,14,42); doc.rect(3,3,W-6,24,'F');
+
+  // Header texto centrado
+  doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(180,160,165);
+  doc.text('PROGRAMA DE CAPACITACIÓN EN IA · MINSAIT / INDRA',W/2,10,{align:'center'});
+  doc.setFontSize(17); doc.setTextColor(255,255,255);
+  doc.text('MINSAIT',W/2,19,{align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(5.5); doc.setTextColor(150,130,140);
+  doc.text('AN INDRA COMPANY · DATA ENGINEERING',W/2,24,{align:'center'});
+
+  // Línea roja bajo header
+  doc.setDrawColor(255,0,84); doc.setLineWidth(0.5);
+  const lw=180; doc.line(W/2-lw/2,27,W/2+lw/2,27);
+
+  // Título CERTIFICADO
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(255,0,84);
+  doc.text('RECONOCIMIENTO OFICIAL',W/2-75,38,{align:'center'});
+  doc.setFontSize(38); doc.setTextColor(72,14,42);
+  doc.text('CERTIFICADO',W/2-75,56,{align:'center'});
+
+  // Línea decorativa bajo título
+  doc.setDrawColor(255,0,84); doc.setLineWidth(0.5);
+  const tw=90; doc.line(W/2-75-tw/2,59,W/2-75+tw/2,59);
+
+  // Sello dorado (círculos concéntricos)
+  const sx=W-55, sy=62;
+  doc.setFillColor(212,160,18); doc.circle(sx,sy,22,'F');
+  doc.setFillColor(245,208,80); doc.circle(sx,sy,18,'F');
+  doc.setFillColor(160,112,8); doc.circle(sx,sy,14,'F');
+  doc.setFillColor(212,160,18); doc.circle(sx,sy,11,'F');
+  // Borde exterior
+  doc.setDrawColor(180,130,10); doc.setLineWidth(1);
+  doc.circle(sx,sy,22,'S');
+  doc.setDrawColor(245,208,80); doc.setLineWidth(0.5);
+  doc.circle(sx,sy,19,'S');
+  // Texto sello
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(72,14,42);
+  doc.text('🏅',sx,sy+2,{align:'center'});
+  doc.setFontSize(5); doc.setTextColor(80,50,5);
+  doc.text('MINSAIT',sx,sy+8,{align:'center'});
+
+  // Datos participante
+  const bx=12, by=68;
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(170,170,170);
+  doc.text('OTORGADO A',bx,by);
+  doc.setFont('helvetica','bold'); doc.setFontSize(24); doc.setTextColor(72,14,42);
+  doc.text(userName,bx,by+11);
+  // Línea roja bajo nombre
+  const nw2=Math.min(doc.getTextWidth(userName),160);
+  doc.setFillColor(255,0,84); doc.rect(bx,by+13,nw2,1,'F');
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(170,170,170);
+  doc.text('QUIEN APROBÓ SATISFACTORIAMENTE',bx,by+20);
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(255,0,84);
+  doc.text('AI Assisted Engineering Learning Path',bx,by+29);
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,0,84);
+  doc.text('Evaluación Final',bx,by+37);
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(150,150,150);
+  doc.text(`Minsait / Indra · Data Engineering · ${userSquad}`,bx,by+44);
+  const fecha=new Date().toLocaleDateString('es-PE',{year:'numeric',month:'long',day:'numeric'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(72,14,42);
+  doc.text(fecha,bx,by+51);
+
+  // Panel scores derecho — rojo
+  const px2=158, pw2=133, pyo=30;
+  doc.setFillColor(255,0,84); doc.roundedRect(px2,pyo,pw2,H-pyo-28,4,4,'F');
+
+  // Score principal
+  const totalScore=moduleStates.reduce((a,s)=>a+s.score,0);
+  const totalXP=totalScore*40;
+  doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(255,200,200);
+  doc.text('SCORE EVALUACIÓN FINAL',px2+pw2/2,pyo+9,{align:'center'});
+  doc.setFontSize(28); doc.setTextColor(255,255,255);
+  doc.text(`${evalScore}/${evalTotal}`,px2+pw2/2,pyo+26,{align:'center'});
+  doc.setFontSize(10); doc.setTextColor(255,220,220);
+  doc.text(`${evalPct}% · Aprobado`,px2+pw2/2,pyo+33,{align:'center'});
+
+  // Separador
+  doc.setDrawColor(255,100,130); doc.setLineWidth(0.3);
+  doc.line(px2+6,pyo+38,px2+pw2-6,pyo+38);
+
+  // Mini stats
+  const mstats=[['800 XP','XP Total'],['4/4','Módulos'],['20/20','Refuerza']];
+  const msx=[px2+22,px2+66,px2+110];
+  mstats.forEach(([v,l],i)=>{
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(255,255,255);
+    doc.text(v,msx[i],pyo+48,{align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(255,200,200);
+    doc.text(l,msx[i],pyo+54,{align:'center'});
+  });
+
+  // Separador
+  doc.line(px2+6,pyo+59,px2+pw2-6,pyo+59);
+
+  // Módulos título
+  doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(255,200,200);
+  doc.text('MÓDULOS COMPLETADOS',px2+pw2/2,pyo+67,{align:'center'});
+
+  // Módulos filas
+  const mods=[
+    ['01 · Engineering Harness'],['02 · Buenas Prácticas'],
+    ['03 · Subagents & Context'],['04 · Proyecto End-to-End']
+  ];
+  mods.forEach(([mn],i)=>{
+    const s=moduleStates[i]?.score||0;
+    const my=pyo+75+i*12;
+    doc.setFillColor(255,255,255,0.08); doc.roundedRect(px2+5,my-5,pw2-10,10,2,2,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
+    doc.text(mn,px2+9,my+0.5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+    doc.text(`${s}/5`,px2+pw2-10,my+0.5,{align:'right'});
+  });
+
+  // Footer borgoña
+  doc.setFillColor(72,14,42); doc.rect(3,H-28,W-6,25,'F');
+
+  // Código certificado
+  const certId=`MINSAIT-AI-${new Date().getFullYear()}-${Math.floor(Math.random()*9000+1000)}`;
+  doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(150,130,140);
+  doc.text('CÓDIGO DE CERTIFICADO',10,H-20);
+  doc.setFontSize(10); doc.setTextColor(255,255,255);
+  doc.text(certId,10,H-12);
+
+  // Badge central
+  doc.setFillColor(255,0,84,0.2); doc.setDrawColor(255,0,84); doc.setLineWidth(0.4);
+  doc.roundedRect(W/2-40,H-24,80,14,5,5,'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(255,0,84);
+  doc.text('🎯 AI Engineer Evaluated',W/2,H-15,{align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(200,140,160);
+  doc.text('Evaluación Final Aprobada',W/2,H-10,{align:'center'});
+
+  // Stamp derecha
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(255,0,84);
+  doc.setDrawColor(255,0,84); doc.setLineWidth(0.4);
+  doc.roundedRect(W-55,H-23,48,12,3,3,'S');
+  doc.text('MINSAIT / INDRA',W-31,H-15,{align:'center'});
+
+  doc.save(`Certificado_Minsait_EvaluacionFinal_${userName.replace(/\s+/g,'_')}.pdf`);
+  showNotif('Certificado Final descargado ✓');
+}
+
 
 // ══ XP & PROGRESS ═════════════════════════════════════════════
 function updateXP() {
