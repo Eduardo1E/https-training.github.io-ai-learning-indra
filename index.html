@@ -481,7 +481,10 @@ const modules = [
       {q:"¿Qué sucede cuando el AI model recibe contexto irrelevante o excesivo?",opts:["El modelo ignora automáticamente la información irrelevante","El modelo puede confundirse, generar respuestas imprecisas o cometer errores lógicos","El modelo mejora su respuesta al tener más información disponible","No hay impacto: el modelo siempre filtra lo que necesita"],correct:1,explain:"El ruido en el contexto degrada la calidad del output. Un harness bien configurado debe entregar al modelo solo la información relevante para cada tarea."},
       {q:"¿Cuál es la diferencia entre un AI model y un AI agent?",opts:["Son términos sinónimos, no hay diferencia técnica","El model genera texto; el agent usa ese modelo + herramientas + contexto para ejecutar tareas complejas de forma autónoma","El agent es más lento que el model porque tiene más pasos","El model trabaja en la nube, el agent solo localmente"],correct:1,explain:"Un AI model es el motor de lenguaje (LLM). Un AI agent combina ese modelo con tool use, memoria y un loop de razonamiento que le permite planificar y ejecutar tareas de ingeniería de forma autónoma."},
       {q:"¿Por qué es importante entender cómo funciona Claude Code internamente?",opts:["No es necesario: basta con saber escribir prompts básicos","Para poder diagnosticar fallos, optimizar el uso del contexto y sacarle el máximo provecho al harness","Solo los arquitectos de software necesitan ese nivel de detalle","Para poder reemplazar a Claude Code con otro harness sin curva de aprendizaje"],correct:1,explain:"Entender el funcionamiento interno permite al developer identificar por qué una sesión se degrada, cómo manejar la context window y cómo estructurar mejor las interacciones."},
-      {q:"¿Cuál es el concepto de 'Context Engineering'?",opts:["El proceso de diseñar la infraestructura donde corre el modelo","La disciplina de construir, filtrar y organizar el contexto que recibe el AI para maximizar la calidad de sus outputs","La configuración de variables de entorno del servidor","Un patrón de arquitectura para sistemas distribuidos con IA"],correct:1,explain:"Context Engineering es la práctica de decidir qué información incluir, cómo estructurarla y cuándo limpiarla. Es la evolución del prompt engineering."}
+      {q:"¿Cuál es el concepto de 'Context Engineering'?",opts:["El proceso de diseñar la infraestructura donde corre el modelo","La disciplina de construir, filtrar y organizar el contexto que recibe el AI para maximizar la calidad de sus outputs","La configuración de variables de entorno del servidor","Un patrón de arquitectura para sistemas distribuidos con IA"],correct:1,explain:"Context Engineering es la práctica de decidir qué información incluir, cómo estructurarla y cuándo limpiarla. Es la evolución del prompt engineering."},
+      {q:"¿Qué ventaja tiene un AI agent sobre un AI model puro al trabajar en un proyecto de software?",opts:["El agent es más económico de usar","El agent puede planificar, ejecutar acciones y corregir errores en ciclos autónomos sin intervención constante del developer","El agent siempre produce mejor código que el model","El agent no requiere prompting porque aprende solo"],correct:1,explain:"Un AI agent combina el modelo con tool use y un loop de razonamiento: puede leer el estado actual del proyecto, ejecutar una acción, ver el resultado y decidir el siguiente paso sin que el developer intervenga en cada microacción."},
+      {q:"¿Por qué los Guardrails son críticos en un Engineering Harness empresarial?",opts:["Porque mejoran la velocidad de respuesta del modelo","Porque evitan que el AI acceda a información sensible, ejecute comandos destructivos o genere outputs que violen políticas corporativas","Porque reducen el costo de tokens de la API","Porque permiten al AI trabajar sin conexión a internet"],correct:1,explain:"En entornos empresariales, los guardrails son la diferencia entre un AI agent confiable y uno que representa un riesgo operacional. Definen el perímetro de acción del AI dentro del contexto corporativo."},
+      {q:"¿Cómo impacta la gestión del Token Budget en la calidad de una sesión larga con AI?",opts:["No tiene impacto: el modelo maneja el budget automáticamente","Un budget mal gestionado llena la context window con información obsoleta, degradando la calidad de las respuestas a medida que avanza la sesión","El budget solo importa por razones de costo, no de calidad","Un mayor uso del budget siempre produce respuestas más completas y precisas"],correct:1,explain:"El token budget es un recurso finito. Gastarlo en contexto irrelevante deja menos espacio para lo que realmente importa. La gestión activa del budget — resumir, comprimir, eliminar ruido — es una habilidad clave de context engineering."}
     ]
   },
   {
@@ -506,7 +509,10 @@ const modules = [
       {q:"¿Cómo se usa el AI correctamente para refactoring de código legado?",opts:["Pedirle que refactorice todo el módulo de una vez para ahorrar tiempo","Explicar primero la intención del código original y las restricciones del negocio, luego pedir cambios incrementales","Dejar que el AI reescriba el código sin contexto del negocio para evitar sesgos","No usar AI para refactoring: es demasiado arriesgado en código productivo"],correct:1,explain:"El refactoring con AI requiere contexto del negocio. Sin entender la intención original, el AI puede 'mejorar' técnicamente pero romper lógica crítica."},
       {q:"¿Qué es el 'iteration loop' en el flujo de trabajo con AI?",opts:["Un bucle infinito que el AI ejecuta para optimizar código","El ciclo de generar → revisar → corregir contexto → regenerar que el developer repite hasta obtener el resultado correcto","Un patrón de diseño para pipelines de datos con IA","La cantidad de veces que el AI puede responder en una sesión"],correct:1,explain:"El iteration loop es el corazón del trabajo con AI: generas un output, lo evalúas con criterio técnico, ajustas el contexto y vuelves a iterar."},
       {q:"¿Cuándo es el momento correcto para iniciar una sesión nueva?",opts:["Después de cada respuesta del AI para mantener el contexto limpio","Cuando la sesión ha acumulado demasiado contexto irrelevante y las respuestas pierden precisión","Solo al inicio de cada sprint de desarrollo","Nunca: siempre es mejor continuar la misma sesión"],correct:1,explain:"Una sesión nueva es necesaria cuando el contexto acumulado genera más ruido que señal. Saber cuándo empezar fresco es una habilidad clave."},
-      {q:"¿Qué es 'Scope Control' en el trabajo con AI?",opts:["Controlar el acceso a internet del AI","La disciplina de mantener al AI enfocado en una tarea específica, evitando que expanda el scope no solicitado","El número máximo de tokens que puede usar el modelo","Un patrón de arquitectura para limitar el uso de herramientas"],correct:1,explain:"Scope Control evita que el AI refactorice código que no le pediste tocar o agregue features no requeridas. Incluye restricciones explícitas en el prompt."}
+      {q:"¿Qué es 'Scope Control' en el trabajo con AI?",opts:["Controlar el acceso a internet del AI","La disciplina de mantener al AI enfocado en una tarea específica, evitando que expanda el scope no solicitado","El número máximo de tokens que puede usar el modelo","Un patrón de arquitectura para limitar el uso de herramientas"],correct:1,explain:"Scope Control evita que el AI refactorice código que no le pediste tocar o agregue features no requeridas. Incluye restricciones explícitas en el prompt."},
+      {q:"¿Cuál es el riesgo principal del Hallucination en un contexto de engineering con AI?",opts:["El AI se niega a responder preguntas técnicas complejas","El AI puede inventar APIs, funciones o librerías que no existen, generando código que falla en runtime","El AI siempre avisa cuando no sabe algo","El hallucination solo ocurre con preguntas de trivia, no con código"],correct:1,explain:"El hallucination en engineering es especialmente peligroso porque el código generado puede compilar correctamente pero referenciar funciones inventadas. Siempre verificá versiones, nombres de APIs y parámetros contra documentación oficial."},
+      {q:"¿Qué diferencia existe entre prompt engineering y context engineering?",opts:["Son sinónimos: ambos se refieren a cómo escribir buenos prompts","El prompt engineering se enfoca en el texto de la instrucción; el context engineering decide qué información total — archivos, historial, estado — recibe el modelo","El context engineering es solo para models grandes como GPT-4","El prompt engineering es más importante que el context engineering en proyectos reales"],correct:1,explain:"El prompt engineering es una parte del context engineering. El context engineering es más amplio: decide no solo cómo formular la instrucción, sino qué archivos incluir, qué historial mantener, qué información filtrar y cuándo limpiar el contexto."},
+      {q:"¿Cuándo es apropiado usar AI para tomar una decisión de arquitectura de software?",opts:["Nunca: las decisiones de arquitectura deben ser 100% humanas","El AI puede analizar trade-offs y proponer opciones, pero el developer toma la decisión final considerando el contexto completo del negocio, el equipo y las restricciones técnicas reales","El AI siempre tiene la mejor solución de arquitectura porque tiene más conocimiento técnico","Solo cuando el team lead lo autoriza explícitamente"],correct:1,explain:"El AI es un excelente consultor técnico para explorar opciones y entender trade-offs. Pero nunca tiene el contexto completo del negocio, los constraint del equipo o las restricciones no documentadas que el developer conoce. La decisión siempre es humana."}
     ]
   },
   {
@@ -531,7 +537,10 @@ const modules = [
       {q:"¿Qué problema resuelve específicamente el Context Isolation en sesiones largas?",opts:["La lentitud de respuesta cuando el modelo está ocupado","La contaminación cruzada: que el contexto de la tarea A interfiera con la precisión de la tarea B","La falta de memoria persistente entre sesiones diferentes","El límite de tokens por minuto de la API del modelo"],correct:1,explain:"Sin isolation, el contexto de una tarea contamina el razonamiento de otras. El isolation elimina este problema."},
       {q:"¿Qué rol cumple el agente orquestador en una arquitectura multi-subagent?",opts:["Ejecuta directamente todas las tareas del proyecto","Define las tareas, asigna contexto a cada subagent, lanza su ejecución y sintetiza los resultados en un output coherente","Solo monitorea el progreso sin intervenir en la ejecución","Es un subagent especializado en la tarea más crítica del proyecto"],correct:1,explain:"El orquestador es el cerebro de la arquitectura: planifica, delega, coordina y sintetiza. No ejecuta directamente."},
       {q:"¿Cuál es el principal riesgo de no aplicar context isolation en un proyecto complejo?",opts:["El proyecto tardará más en compilar","El AI generará código inconsistente: puede contradecir decisiones previas, mezclar patrones o ignorar restricciones definidas","Solo genera código más verboso de lo necesario","El riesgo es solo de rendimiento, no de calidad del código"],correct:1,explain:"Sin isolation, en proyectos complejos el AI pierde coherencia entre módulos e introduce inconsistencias arquitecturales."},
-      {q:"¿Qué es Retry Logic en el contexto de subagents?",opts:["Un sistema de autenticación de los subagents","La estrategia para manejar fallos de subagents: reintentar con contexto adicional, escalar al orquestador o marcar como fallida","Un mecanismo de cache para reutilizar resultados anteriores","El proceso de reiniciar el modelo cuando tiene errores"],correct:1,explain:"Retry Logic define qué hacer cuando un subagent falla: reintentar con el mensaje de error como contexto adicional antes de alertar al developer."}
+      {q:"¿Qué es Retry Logic en el contexto de subagents?",opts:["Un sistema de autenticación de los subagents","La estrategia para manejar fallos de subagents: reintentar con contexto adicional, escalar al orquestador o marcar como fallida","Un mecanismo de cache para reutilizar resultados anteriores","El proceso de reiniciar el modelo cuando tiene errores"],correct:1,explain:"Retry Logic define qué hacer cuando un subagent falla: reintentar con el mensaje de error como contexto adicional antes de alertar al developer."},
+      {q:"¿Qué sucede si dos subagents en paralelo modifican el mismo recurso sin coordinación?",opts:["No pasa nada: los subagents tienen mecanismos automáticos de lock","Pueden generar conflictos, sobrescribirse mutuamente o producir resultados inconsistentes","El orquestador siempre detecta y resuelve estos conflictos automáticamente","Solo ocurre con bases de datos, no con archivos de código"],correct:1,explain:"La coordinación es responsabilidad del orquestador. Si dos subagents modifican el mismo archivo o recurso en paralelo sin un mecanismo de lock, el resultado puede ser impredecible. El diseño del Dependency Graph debe prevenir estos conflictos."},
+      {q:"¿Cuál es la ventaja del Message Passing estructurado entre subagents vs compartir contexto global?",opts:["El Message Passing es más lento pero más seguro","El Message Passing permite que cada subagent reciba exactamente la información que necesita, evitando que procese ruido innecesario que degrada su precisión","No hay diferencia práctica entre los dos enfoques","El contexto global es siempre preferible porque centraliza la información"],correct:1,explain:"Con Message Passing estructurado, cada subagent recibe un input específico y produce un output específico. Con contexto global compartido, cada subagent procesa todo el contexto acumulado, lo que introduce ruido y degrada la precisión a medida que crece la sesión."},
+      {q:"¿Cómo aplica el concepto de subagents en herramientas como GitHub Copilot o Amazon Q Developer?",opts:["Estas herramientas no tienen capacidad de subagents por diseño","Aunque no tienen subagents nativos, el developer puede simular isolation trabajando en archivos específicos con foco claro, sin contexto irrelevante visible, aplicando el mismo principio manualmente","Solo Claude Code soporta subagents, las demás herramientas no","Los subagents son un concepto teórico que no aplica a herramientas de coding reales"],correct:1,explain:"El principio de isolation aplica aunque la herramienta no tenga subagents nativos: trabajar en un archivo específico con una tarea concreta, cerrar los archivos no relacionados, y dar a la herramienta solo el contexto que necesita para esa tarea. El developer aplica isolation manualmente."}
     ]
   },
   {
@@ -556,7 +565,10 @@ const modules = [
       {q:"¿Por qué un developer debe mantener criterio técnico durante una sesión larga de AI-assisted coding?",opts:["Para cumplir requisitos de compliance","Porque el AI puede desviarse del objetivo original o acumular deuda técnica que falla a escala","El criterio solo importa en la fase de arquitectura, no durante el coding","Para poder reportar cuántas líneas generó el AI vs el developer"],correct:1,explain:"En sesiones largas, el AI puede optimizar localmente sin ver el impacto global. El developer debe mantener la visión del sistema completo."},
       {q:"¿Cómo usa un developer avanzado el AI para debugging?",opts:["Le pasa el error completo sin contexto y espera que el AI lo resuelva solo","Le proporciona el error, el stack trace, el código relevante y el contexto de qué se intentaba lograr; luego evalúa la solución propuesta","Usa el AI solo para errores de sintaxis, nunca para errores de lógica","Evita el AI en debugging porque puede introducir más bugs al corregir"],correct:1,explain:"El debugging efectivo con AI requiere contexto completo: el error, la traza, el código involucrado y la intención original."},
       {q:"¿Qué significa 'development loop' en el contexto de AI-assisted engineering?",opts:["Un bucle infinito de generación de código sin intervención humana","El ciclo continuo de definir tarea → generar con AI → revisar → validar → iterar hasta cumplir el criterio de aceptación","La rutina diaria de sincronización del developer con el equipo de QA","Un proceso automatizado de CI/CD con IA integrada"],correct:1,explain:"El development loop es el ciclo iterativo core del trabajo con AI. No es lineal: en cada iteración el developer aporta criterio, el AI genera, y juntos convergen al resultado correcto."},
-      {q:"¿Cómo se documenta un proyecto construido con AI assistance?",opts:["El AI genera toda la documentación automáticamente sin revisión","El developer usa el AI para generar borradores de documentación técnica basados en el código real, luego los revisa y complementa con decisiones de diseño y contexto de negocio","La documentación no es necesaria en proyectos con AI porque el código es autoexplicativo","Solo se documenta el código que el developer escribió manualmente"],correct:1,explain:"El AI acelera la documentación pero no puede documentar el 'por qué' de las decisiones. El developer aporta el contexto de negocio que solo él conoce."}
+      {q:"¿Cómo se documenta un proyecto construido con AI assistance?",opts:["El AI genera toda la documentación automáticamente sin revisión","El developer usa el AI para generar borradores de documentación técnica basados en el código real, luego los revisa y complementa con decisiones de diseño y contexto de negocio","La documentación no es necesaria en proyectos con AI porque el código es autoexplicativo","Solo se documenta el código que el developer escribió manualmente"],correct:1,explain:"El AI acelera la documentación pero no puede documentar el 'por qué' de las decisiones. El developer aporta el contexto de negocio que solo él conoce."},
+      {q:"¿Cómo debe un developer manejar las dependencias generadas automáticamente por el AI?",opts:["Aceptarlas sin revisión porque el AI siempre elige las versiones más estables","Revisar cada dependencia generada: verificar versiones, compatibilidad, licencias y si realmente es necesaria antes de agregarla al proyecto","Solo revisar si el AI agrega más de 10 dependencias nuevas","Dejar que el AI gestione el package.json de forma autónoma sin intervención"],correct:1,explain:"El AI puede agregar dependencias innecesarias, elegir versiones antiguas o introducir librerías con problemas de licencia. El developer debe revisar cada dependencia con el mismo criterio que aplicaría si la hubiera elegido él mismo."},
+      {q:"¿Qué papel cumple el Security Review en un proyecto construido con AI assistance?",opts:["No es necesario si el AI es un modelo de última generación","El AI puede introducir vulnerabilidades sin saberlo: validaciones faltantes, exposición de secrets, inyecciones. El Security Review es obligatorio antes de cualquier deploy","Solo aplica si el proyecto maneja datos sensibles","El AI detecta automáticamente todas las vulnerabilidades de seguridad en el código que genera"],correct:1,explain:"El AI optimiza para funcionalidad, no para seguridad. Puede generar código que funciona perfectamente pero tiene vulnerabilidades de seguridad. El Security Review explícito — pidiendo al AI que busque problemas de seguridad — es un paso no negociable antes del deploy."},
+      {q:"¿Cuál es el criterio más importante para determinar si un proyecto AI-assisted está listo para producción?",opts:["Que el AI haya generado más del 80% del código sin errores","Que el developer entienda, pueda explicar y sea responsable de cada parte del sistema, independientemente de quién lo escribió","Que los tests automáticos generados por el AI pasen al 100%","Que el tiempo de desarrollo haya sido menor al estimado inicial"],correct:1,explain:"El criterio de producción no cambia con el AI: el developer debe entender el sistema completo, poder debuggearlo, modificarlo y ser responsable de su comportamiento en producción. Si hay partes que el AI generó y el developer no entiende, no está listo para producción."}
     ]
   }
 ];
@@ -921,11 +933,24 @@ async function onVideoTerminado(moduleIdx){
   moduleStates[moduleIdx].videoVisto=true;
   moduleStates[moduleIdx].refuerzaHabilitado=true;
   guardarSesion();
+
+  // Actualizar status bar
   const bar=document.getElementById('video-status-bar');
-  if(bar) bar.innerHTML=`<span style="color:var(--green)">✓ Video completado — Refuerza lo aprendido desbloqueado</span>`;
+  if(bar) bar.innerHTML=`<span style="color:var(--green)">✓ Video completado — Refuerza lo aprendido desbloqueado ⚡</span>`;
+
+  // Activar tab Refuerza
   actualizarTabQuiz();
   updateNav();
-  showNotif('🎉 ¡Video completado! Refuerza desbloqueado');
+  showNotif('🎉 ¡Video completado! Iniciando Refuerza lo aprendido...');
+
+  // Ir al quiz automáticamente después de 1.5 segundos
+  setTimeout(()=>{
+    if(currentModule===moduleIdx && currentView==='module'){
+      switchTabVisual('quiz');
+      currentTab='quiz';
+      goToQuiz();
+    }
+  }, 1500);
 }
 
 // ══ REFUERZA ══════════════════════════════════════════════════
@@ -1121,25 +1146,27 @@ function showCompletion(){
         <div class="final-stat"><div class="final-stat-num">${totalXP}</div><div class="final-stat-label">XP Total</div></div>
         <div class="final-stat"><div class="final-stat-num">${pct}%</div><div class="final-stat-label">Score Global</div></div>
       </div>
-      <div class="badges" style="justify-content:center;margin-bottom:28px">
+      <div class="badges" style="justify-content:center;margin-bottom:24px">
         <div class="badge badge-gold">🏆 Completado</div>
         <div class="badge badge-blue">AI Engineering</div>
         <div class="badge badge-green">Claude Code Ready</div>
       </div>
-      <div class="export-box" style="max-width:600px;margin:0 auto 24px">
-        <div class="export-title">📊 RESUMEN FINAL DE RESULTADOS</div>
+      <div class="export-box" style="max-width:620px;margin:0 auto 24px;border-color:rgba(34,211,165,.4)">
+        <div class="export-title" style="color:var(--green)">📊 RESUMEN FINAL DE RESULTADOS</div>
         ${moduleStates.map((s,i)=>`
           <div class="export-row">
             <span class="export-row-label">${modules[i].num} · ${modules[i].title}</span>
-            <span class="export-row-val" style="color:${s.completed?'var(--green)':'var(--red)'}">${s.score}/5 · ${Math.round(s.score/5*100)}% · ${s.completed?'✓ Aprobado':'✗ No aprobado'}</span>
+            <span class="export-row-val" style="color:${s.completed?'var(--green)':'var(--red)'}">
+              ${s.score}/5 · ${Math.round(s.score/5*100)}% · ${s.completed?'✓ Aprobado':'✗ No aprobado'}
+            </span>
           </div>`).join('')}
-        <div class="export-row" style="border-top:1px solid var(--accent);margin-top:8px;padding-top:8px">
-          <span class="export-row-label" style="font-weight:700">Score Global</span>
-          <span class="export-row-val" style="color:var(--accent)">${totalScore}/20 · ${pct}%</span>
+        <div class="export-row" style="border-top:1px solid rgba(34,211,165,.3);margin-top:8px;padding-top:8px">
+          <span class="export-row-label" style="font-weight:700;color:var(--text)">Score Global</span>
+          <span class="export-row-val" style="color:var(--accent);font-size:14px">${totalScore}/20 · ${pct}%</span>
         </div>
       </div>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <button class="btn btn-export" onclick="exportarTodosResultados()">📥 Exportar todos mis resultados</button>
+        <button class="btn btn-export" style="font-size:14px;padding:12px 28px" onclick="exportarTodosResultados()">📥 Exportar mis resultados</button>
         <button class="btn btn-ghost" onclick="location.reload()">↺ Reiniciar</button>
       </div>
     </div>`;
@@ -1242,15 +1269,19 @@ function nextEval() {
           </div>
           <div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
             <button class="btn btn-ghost" onclick="renderEval()">↺ Reintentar</button>
-            <button class="btn btn-export" onclick="exportarEval()">📥 Exportar resultados</button>
+            <button class="btn btn-export" style="font-size:14px;padding:12px 24px" onclick="exportarEval()">📥 Exportar mis resultados</button>
           </div>
           <div class="export-box">
             <div class="export-title">📊 DETALLE — EVALUACIÓN FINAL</div>
             ${quizState.historial.map((h,i)=>`
               <div class="export-row">
-                <span class="export-row-label">P${i+1}: ${h.pregunta.substring(0,45)}...</span>
-                <span class="export-row-val" style="color:${h.ok?'var(--green)':'var(--red)'}">${h.ok?'✓':'✗'}</span>
+                <span class="export-row-label">P${i+1}: ${h.pregunta.substring(0,50)}...</span>
+                <span class="export-row-val" style="color:${h.ok?'var(--green)':'var(--red)'}">${h.ok?'✓ Correcto':'✗ Incorrecto'}</span>
               </div>`).join('')}
+            <div class="export-row" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px">
+              <span class="export-row-label" style="font-weight:700;color:var(--text)">Score Final</span>
+              <span class="export-row-val" style="color:${color};font-size:14px">${score}/${total} · ${pct}%</span>
+            </div>
           </div>
         </div>
       </div>`;
