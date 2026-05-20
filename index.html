@@ -845,6 +845,12 @@ async function continuarSesion() {
 }
 
 function mostrarFormCompleto(correo='', nombre='') {
+  // Si hay una sesión activa, limpiar y recargar para evitar conflictos
+  if (userName) {
+    try { localStorage.removeItem(LAST_USER_KEY); } catch(e) {}
+    location.reload();
+    return;
+  }
   document.getElementById('reg-view-returning').style.display = 'none';
   document.getElementById('reg-view-new').style.display = 'block';
   if (correo) document.getElementById('f-correo').value = correo;
@@ -856,12 +862,7 @@ function mostrarFormCompleto(correo='', nombre='') {
 
 function cerrarSesion() {
   try {
-    // Solo borra la sesión del usuario actual, NO el último usuario
-    // Para que al volver muestre la pantalla de bienvenida
-    if (userEmail) {
-      const key = `${SESSION_KEY}_${userEmail}`;
-      localStorage.removeItem(key);
-    }
+    if (userEmail) localStorage.removeItem(`${SESSION_KEY}_${userEmail}`);
     localStorage.removeItem(LAST_USER_KEY);
   } catch(e) {}
   location.reload();
