@@ -596,6 +596,7 @@ textarea.admin-input{resize:vertical;min-height:80px;}
         <div class="admin-tab" id="atab-admins" onclick="switchAdminTab('admins',this)">🔐 Admins</div>
         <div class="admin-tab" id="atab-preguntas" onclick="switchAdminTab('preguntas',this)">✏️ Preguntas</div>
         <div class="admin-tab" id="atab-evaluacion" onclick="switchAdminTab('evaluacion',this)">🎯 Evaluación</div>
+        <div class="admin-tab" id="atab-metricas" onclick="switchAdminTab('metricas',this)">📊 Métricas</div>
       </div>
 
       <!-- TAB USUARIOS -->
@@ -675,6 +676,63 @@ textarea.admin-input{resize:vertical;min-height:80px;}
         <div class="admin-section-title">Preguntas actuales (<span id="eval-count">0</span>)</div>
         <div id="lista-preguntas-eval"></div>
       </div>
+
+      <!-- TAB MÉTRICAS -->
+      <div class="admin-panel" id="panel-metricas">
+        <!-- KPIs resumen -->
+        <div id="metricas-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace" id="kpi-total">—</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Total ingresados</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid rgba(34,211,165,.3);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace" id="kpi-aprobados">—</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Aprobados</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:var(--red);font-family:'JetBrains Mono',monospace" id="kpi-desaprobados">—</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">No aprobados</div>
+          </div>
+          <div style="background:var(--bg);border:1px solid rgba(255,0,84,.3);border-radius:10px;padding:14px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#FF0054;font-family:'JetBrains Mono',monospace" id="kpi-promedio">—</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px">Promedio score</div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <input class="admin-input" id="filtro-nombre" placeholder="🔍 Buscar nombre..." style="flex:2;margin-bottom:0" oninput="filtrarMetricas()"/>
+          <input class="admin-input" id="filtro-focal" placeholder="🔍 Focal Point..." style="flex:1;margin-bottom:0" oninput="filtrarMetricas()"/>
+          <select class="admin-input" id="filtro-resultado" style="flex:1;margin-bottom:0" onchange="filtrarMetricas()">
+            <option value="">Todos</option>
+            <option value="APROBADO">Aprobados</option>
+            <option value="COMPLETADO">Completados</option>
+            <option value="INGRESÓ">Solo ingresaron</option>
+          </select>
+          <button class="btn" style="background:#FF0054;color:#fff;white-space:nowrap" onclick="exportarMetricas()">📥 Exportar</button>
+        </div>
+
+        <!-- Tabla -->
+        <div style="overflow-x:auto;max-height:340px;overflow-y:auto">
+          <table id="tabla-metricas" style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead>
+              <tr style="position:sticky;top:0;background:var(--panel);z-index:1">
+                <th style="text-align:left;padding:8px 10px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;border-bottom:1px solid var(--border);cursor:pointer" onclick="ordenarMetricas('nombre')">NOMBRE ↕</th>
+                <th style="text-align:left;padding:8px 10px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;border-bottom:1px solid var(--border);cursor:pointer" onclick="ordenarMetricas('focal')">FOCAL ↕</th>
+                <th style="text-align:center;padding:8px 10px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;border-bottom:1px solid var(--border);cursor:pointer" onclick="ordenarMetricas('scorePct')">SCORE ↕</th>
+                <th style="text-align:center;padding:8px 10px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;border-bottom:1px solid var(--border)">MÓDULOS</th>
+                <th style="text-align:center;padding:8px 10px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;border-bottom:1px solid var(--border)">ESTADO</th>
+                <th style="text-align:left;padding:8px 10px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;border-bottom:1px solid var(--border)">FECHA</th>
+              </tr>
+            </thead>
+            <tbody id="metricas-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Cargando métricas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono',monospace" id="metricas-count"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1449,6 +1507,8 @@ function switchAdminTab(tab, el) {
   if(el) el.classList.add('active');
   const panel=document.getElementById('panel-'+tab);
   if(panel) panel.classList.add('active');
+  // Cargar métricas solo cuando se activa esa tab
+  if(tab==='metricas') cargarMetricas();
 }
 
 function renderListaAdmins() {
@@ -2100,6 +2160,135 @@ function _generarCertificadoFinal(evalScore, evalTotal, evalPct) {
   showNotif('Certificado Final descargado ✓');
 }
 
+
+// ══ MÉTRICAS ══════════════════════════════════════════════════
+let _metricasData = [];
+let _metricasFiltradas = [];
+let _ordenCol = 'nombre';
+let _ordenAsc = true;
+
+async function cargarMetricas() {
+  const tbody = document.getElementById('metricas-tbody');
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Cargando...</td></tr>`;
+  try {
+    const params = new URLSearchParams({accion:'metricas', admin:userEmail});
+    const resp = await fetch(`${SHEETS_URL}?${params.toString()}`,{method:'GET',mode:'cors'});
+    const data = await resp.json();
+    if (!data.ok) { tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--red)">Error al cargar datos</td></tr>`; return; }
+    _metricasData = data.registros || [];
+    filtrarMetricas();
+  } catch(e) {
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--red)">Error de conexión</td></tr>`;
+  }
+}
+
+function filtrarMetricas() {
+  const busNombre = (document.getElementById('filtro-nombre')?.value||'').toLowerCase();
+  const busFocal  = (document.getElementById('filtro-focal')?.value||'').toLowerCase();
+  const busRes    = (document.getElementById('filtro-resultado')?.value||'');
+
+  _metricasFiltradas = _metricasData.filter(r => {
+    const okNombre = !busNombre || r.nombre.toLowerCase().includes(busNombre);
+    const okFocal  = !busFocal  || r.focal.toLowerCase().includes(busFocal);
+    const okRes    = !busRes    || r.resultado === busRes;
+    return okNombre && okFocal && okRes;
+  });
+
+  ordenarMetricas(_ordenCol, true);
+}
+
+function ordenarMetricas(col, mantener=false) {
+  if (!mantener) {
+    if (_ordenCol === col) _ordenAsc = !_ordenAsc;
+    else { _ordenCol = col; _ordenAsc = true; }
+  }
+  _metricasFiltradas.sort((a,b)=>{
+    let va = a[col]??'', vb = b[col]??'';
+    if (typeof va === 'number') return _ordenAsc ? va-vb : vb-va;
+    return _ordenAsc
+      ? String(va).localeCompare(String(vb))
+      : String(vb).localeCompare(String(va));
+  });
+  renderTablaMetricas();
+}
+
+function renderTablaMetricas() {
+  const tbody = document.getElementById('metricas-tbody');
+  if (!tbody) return;
+
+  // KPIs
+  const total = _metricasFiltradas.length;
+  const aprobados = _metricasFiltradas.filter(r=>r.resultado==='APROBADO').length;
+  const desaprobados = _metricasFiltradas.filter(r=>r.resultado==='COMPLETADO'&&r.scorePct!==null&&r.scorePct<70).length;
+  const conScore = _metricasFiltradas.filter(r=>r.scorePct!==null);
+  const promedio = conScore.length ? Math.round(conScore.reduce((a,r)=>a+r.scorePct,0)/conScore.length) : null;
+
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-aprobados').textContent = aprobados;
+  document.getElementById('kpi-desaprobados').textContent = desaprobados;
+  document.getElementById('kpi-promedio').textContent = promedio!==null ? promedio+'%' : '—';
+  document.getElementById('metricas-count').textContent = `Mostrando ${total} registro${total!==1?'s':''}`;
+
+  if (total === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Sin registros con los filtros actuales</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = _metricasFiltradas.map(r => {
+    const res = r.resultado;
+    let badgeColor='var(--muted)', badgeBg='rgba(100,116,139,.1)';
+    if(res==='APROBADO'){badgeColor='var(--green)';badgeBg='rgba(34,211,165,.1)';}
+    else if(res==='COMPLETADO'){badgeColor='var(--yellow)';badgeBg='rgba(245,158,11,.1)';}
+    else if(res==='INGRESÓ'){badgeColor='var(--accent)';badgeBg='rgba(79,142,247,.1)';}
+
+    const scoreBar = r.scorePct !== null
+      ? `<div style="display:flex;align-items:center;gap:6px;justify-content:center">
+           <div style="width:48px;height:4px;background:var(--border);border-radius:4px;overflow:hidden">
+             <div style="width:${r.scorePct}%;height:100%;background:${r.scorePct>=70?'var(--green)':'var(--red)'};border-radius:4px"></div>
+           </div>
+           <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${r.scorePct>=70?'var(--green)':'var(--red)'}">${r.scorePct}%</span>
+         </div>`
+      : `<span style="color:var(--muted);font-size:10px">—</span>`;
+
+    return `<tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(79,142,247,.04)'" onmouseout="this.style.background=''">
+      <td style="padding:8px 10px">
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${r.nombre||'—'}</div>
+        <div style="font-size:10px;color:var(--muted)">${r.correo}</div>
+      </td>
+      <td style="padding:8px 10px;font-size:11px;color:var(--muted)">${r.focal||'—'}</td>
+      <td style="padding:8px 10px;text-align:center">${scoreBar}</td>
+      <td style="padding:8px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">${r.modulos||'—'}</td>
+      <td style="padding:8px 10px;text-align:center">
+        <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${badgeBg};color:${badgeColor};font-weight:600">${res||'—'}</span>
+      </td>
+      <td style="padding:8px 10px;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">${r.fecha||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportarMetricas() {
+  if (_metricasFiltradas.length === 0) { showNotif('Sin datos para exportar'); return; }
+
+  const headers = ['Nombre','Correo','Squad','Focal Point','Score','Módulos','XP','Resultado','Fecha'];
+  const rows = _metricasFiltradas.map(r => [
+    r.nombre, r.correo, r.squad, r.focal,
+    r.score, r.modulos, r.xp, r.resultado, r.fecha
+  ]);
+
+  // Generar CSV con BOM para que Excel abra bien los tildes
+  const BOM = '\uFEFF';
+  const csv = BOM + [headers, ...rows]
+    .map(row => row.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','))
+    .join('\r\n');
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const fecha = new Date().toLocaleDateString('es-PE').replace(/\//g,'-');
+  link.href = url; link.download = `Metricas_AI_Learning_${fecha}.csv`;
+  link.click(); URL.revokeObjectURL(url);
+  showNotif(`${_metricasFiltradas.length} registros exportados ✓`);
+}
 
 // ══ XP & PROGRESS ═════════════════════════════════════════════
 function updateXP() {
