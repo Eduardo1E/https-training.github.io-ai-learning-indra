@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AI Assisted Engineering – Learning Path | MINSAIT / INDRA</title>
+<title>AI Assisted Engineering – Learning Path | Minsait / Indra</title>
 <script src="https://www.youtube.com/iframe_api"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap');
@@ -416,36 +416,60 @@ textarea.admin-input{resize:vertical;min-height:80px;}
 <div class="reg-screen" id="regScreen">
   <div class="reg-card">
     <div class="reg-logo">MINSAIT / INDRA · AI LEARNING PATH</div>
-    <div class="reg-icon">🚀</div>
-    <div class="reg-title">AI Assisted Engineering</div>
-    <div class="reg-sub">Completa tu registro para comenzar. Todos los campos son obligatorios.</div>
 
-    <label class="reg-label">NOMBRES Y APELLIDOS COMPLETOS</label>
-    <input class="reg-input" id="f-nombre" type="text" placeholder="Ej: Juan Alberto Pérez García" maxlength="80"/>
-    <div class="reg-error" id="e-nombre">Ingresa tu nombre y apellido completos (mínimo dos palabras)</div>
-
-    <label class="reg-label">CORREO CORPORATIVO</label>
-    <input class="reg-input" id="f-correo" type="email" placeholder="Ej: jperez@indracompany.com" maxlength="80"/>
-    <div class="reg-error" id="e-correo">Solo se permite correo @indracompany.com</div>
-
-    <div id="reg-squad-block">
-    <label class="reg-label">SQUAD / ÁREA</label>
-    <input class="reg-input" id="f-squad" type="text" placeholder="Ej: Data Engineering · Squad Lakehouse" maxlength="60"/>
-    <div class="reg-error" id="e-squad">Ingresa tu squad o área</div>
-
-    <label class="reg-label">FOCAL POINT</label>
-    <input class="reg-input" id="f-focal" type="text" placeholder="Nombre de tu Focal Point" maxlength="60"/>
-    <div class="reg-error" id="e-focal">Ingresa el nombre de tu Focal Point</div>
+    <!-- VISTA A: Bienvenida de regreso (usuario conocido) -->
+    <div id="reg-view-returning" style="display:none">
+      <div class="reg-icon">👋</div>
+      <div class="reg-title" id="reg-returning-name">Hola de nuevo</div>
+      <div class="reg-sub">Continúa donde lo dejaste</div>
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px;text-align:left">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#FF0054,#480E2A);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👤</div>
+        <div style="flex:1;overflow:hidden">
+          <div style="font-size:13px;font-weight:700;color:var(--text)" id="reg-returning-name2"></div>
+          <div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="reg-returning-email"></div>
+        </div>
+        <div style="font-size:18px;color:var(--green)">✓</div>
+      </div>
+      <button class="reg-btn" id="regBtnContinuar" onclick="continuarSesion()">Continuar →</button>
+      <button onclick="mostrarFormCompleto()" style="width:100%;padding:12px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:13px;font-family:'Sora',sans-serif;cursor:pointer;margin-top:10px;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        Usar otra cuenta
+      </button>
     </div>
 
-    <button class="reg-btn" id="regBtn">Comenzar capacitación →</button>
+    <!-- VISTA B: Formulario completo (usuario nuevo) -->
+    <div id="reg-view-new">
+      <div class="reg-icon">🚀</div>
+      <div class="reg-title">AI Assisted Engineering</div>
+      <div class="reg-sub" id="reg-sub-text">Completa tu registro para comenzar.</div>
 
-    <div class="reg-chips">
-      <div class="reg-chip">01 Engineering Harness</div>
-      <div class="reg-chip">02 Buenas Prácticas</div>
-      <div class="reg-chip">03 Subagents & Context</div>
-      <div class="reg-chip">04 End-to-End</div>
+      <label class="reg-label">NOMBRES Y APELLIDOS COMPLETOS</label>
+      <input class="reg-input" id="f-nombre" type="text" placeholder="Ej: Juan Alberto Pérez García" maxlength="80"/>
+      <div class="reg-error" id="e-nombre">Ingresa tu nombre y apellido completos (mínimo dos palabras)</div>
+
+      <label class="reg-label">CORREO CORPORATIVO</label>
+      <input class="reg-input" id="f-correo" type="email" placeholder="Ej: jperez@indracompany.com" maxlength="80"/>
+      <div class="reg-error" id="e-correo">Solo se permite correo @indracompany.com</div>
+
+      <div id="reg-squad-block">
+        <label class="reg-label">SQUAD / ÁREA</label>
+        <input class="reg-input" id="f-squad" type="text" placeholder="Ej: Data Engineering · Squad Lakehouse" maxlength="60"/>
+        <div class="reg-error" id="e-squad">Ingresa tu squad o área</div>
+
+        <label class="reg-label">FOCAL POINT</label>
+        <input class="reg-input" id="f-focal" type="text" placeholder="Nombre de tu Focal Point" maxlength="60"/>
+        <div class="reg-error" id="e-focal">Ingresa el nombre de tu Focal Point</div>
+      </div>
+
+      <button class="reg-btn" id="regBtn">Comenzar capacitación →</button>
+
+      <div class="reg-chips">
+        <div class="reg-chip">01 Engineering Harness</div>
+        <div class="reg-chip">02 Buenas Prácticas</div>
+        <div class="reg-chip">03 Subagents & Context</div>
+        <div class="reg-chip">04 End-to-End</div>
+      </div>
     </div>
+
   </div>
 </div>
 
@@ -744,24 +768,57 @@ const NOTA_MINIMA_EVAL = 7;
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycby3hJL8WUmGWom8gwUSv0dWvVIyhBjCn5aqdY3Vvc7SW7nXiug7_R8ZCnhOqLOa4y8/exec';
 const FORMSUBMIT_EMAIL = 'ejescusa@indracompany.com';
 const SESSION_KEY = 'ai_learning_v1';
+const LAST_USER_KEY = 'ai_learning_last_user';
 
 // ══ PERSISTENCIA DE SESIÓN ════════════════════════════════════
 function guardarSesion() {
   try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
+    const key = `${SESSION_KEY}_${userEmail}`;
+    localStorage.setItem(key, JSON.stringify({
       userName, userEmail, userSquad, userFocal, esAdmin,
       quizHabilitado, moduleStates, currentModule
+    }));
+    // Guardar el último usuario para pre-llenar la pantalla
+    localStorage.setItem(LAST_USER_KEY, JSON.stringify({
+      userName, userEmail
     }));
   } catch(e) {}
 }
 
 async function restaurarSesion() {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (!raw) return false;
-    const s = JSON.parse(raw);
-    if (!s.userEmail) return false;
+    // Ver si hay un último usuario guardado
+    const lastRaw = localStorage.getItem(LAST_USER_KEY);
+    if (!lastRaw) return false;
+    const last = JSON.parse(lastRaw);
+    if (!last.userEmail) return false;
 
+    // Mostrar pantalla de bienvenida con ese usuario
+    document.getElementById('reg-returning-name').textContent = `Hola, ${last.userName.split(' ')[0]} 👋`;
+    document.getElementById('reg-returning-name2').textContent = last.userName;
+    document.getElementById('reg-returning-email').textContent = last.userEmail;
+    document.getElementById('reg-view-returning').style.display = 'block';
+    document.getElementById('reg-view-new').style.display = 'none';
+
+    // Guardar referencia para cuando confirme
+    window._lastUser = last;
+    return false; // No restaurar automáticamente — esperar confirmación del usuario
+  } catch(e) { return false; }
+}
+
+async function continuarSesion() {
+  const last = window._lastUser;
+  if (!last) return;
+
+  const key = `${SESSION_KEY}_${last.userEmail}`;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) {
+      // No hay datos guardados, ir al form con correo pre-llenado
+      mostrarFormCompleto(last.userEmail, last.userName);
+      return;
+    }
+    const s = JSON.parse(raw);
     userName      = s.userName     || '';
     userEmail     = s.userEmail    || '';
     userSquad     = s.userSquad    || '';
@@ -770,18 +827,43 @@ async function restaurarSesion() {
     currentModule = s.currentModule|| 0;
     moduleStates  = s.moduleStates || modules.map(()=>({completed:false,quizDone:false,score:0,videoVisto:false,refuerzaHabilitado:false}));
 
-    // Verificar habilitación actualizada desde Sheets
-    if (esAdmin) {
-      quizHabilitado = true;
-    } else {
-      await verificarHabilitacion();
-    }
-    return true;
-  } catch(e) { return false; }
+    if (esAdmin) { quizHabilitado = true; }
+    else { await verificarHabilitacion(); }
+
+    document.getElementById('regScreen').classList.add('hidden');
+    document.getElementById('topbarUser').innerHTML=`👤 <span>${userName}</span>${esAdmin?' <span style="color:#FF0054;font-size:10px;margin-left:4px">ADMIN</span>':''}`;
+    if (esAdmin) document.getElementById('adminBtn').style.display='flex';
+    document.getElementById('logoutBtn').style.display='flex';
+    await cargarEvalDesdeSheets();
+    actualizarTabQuiz();
+    actualizarNavEval();
+    currentTab='video'; switchTabVisual('video');
+    updateNav(); updateXP(); updateGlobalProgress(); renderContent();
+  } catch(e) {
+    mostrarFormCompleto(last.userEmail, last.userName);
+  }
+}
+
+function mostrarFormCompleto(correo='', nombre='') {
+  document.getElementById('reg-view-returning').style.display = 'none';
+  document.getElementById('reg-view-new').style.display = 'block';
+  if (correo) document.getElementById('f-correo').value = correo;
+  if (nombre) document.getElementById('f-nombre').value = nombre;
+  document.getElementById('reg-sub-text').textContent = correo
+    ? 'Usa otra cuenta o confirma tus datos.'
+    : 'Completa tu registro para comenzar.';
 }
 
 function cerrarSesion() {
-  try { localStorage.removeItem(SESSION_KEY); } catch(e) {}
+  try {
+    // Solo borra la sesión del usuario actual, NO el último usuario
+    // Para que al volver muestre la pantalla de bienvenida
+    if (userEmail) {
+      const key = `${SESSION_KEY}_${userEmail}`;
+      localStorage.removeItem(key);
+    }
+    localStorage.removeItem(LAST_USER_KEY);
+  } catch(e) {}
   location.reload();
 }
 
@@ -916,19 +998,8 @@ function actualizarNavEval() {
 
 // Enter entre campos
 window.addEventListener('DOMContentLoaded', async () => {
-  // Intentar restaurar sesión guardada
-  const restaurada = await restaurarSesion();
-  if (restaurada) {
-    document.getElementById('regScreen').classList.add('hidden');
-    document.getElementById('topbarUser').innerHTML=`👤 <span>${userName}</span>${esAdmin?' <span style="color:#FF0054;font-size:10px;margin-left:4px">ADMIN</span>':''}`;
-    if (esAdmin) document.getElementById('adminBtn').style.display='flex';
-    document.getElementById('logoutBtn').style.display='flex';
-    await cargarEvalDesdeSheets(); // cargar preguntas y estado desde Sheets
-    actualizarTabQuiz();
-    actualizarNavEval();
-    currentTab='video'; switchTabVisual('video');
-    updateNav(); updateXP(); updateGlobalProgress(); renderContent();
-  }
+  // Mostrar pantalla correcta según si hay usuario previo
+  await restaurarSesion(); // Solo muestra la UI, no entra automático
   [['f-nombre','f-correo'],['f-correo','f-squad'],['f-squad','f-focal']].forEach(([a,b])=>{
     document.getElementById(a).addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById(b)?.focus(); });
   });
